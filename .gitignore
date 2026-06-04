@@ -1,0 +1,21 @@
+# Dépendances & données runtime
+files/node_modules/
+files/data/
+
+# Secrets — jamais commités
+.env
+files/.env
+
+# Logs & outillage de session
+*.log
+.remember/
+files/.remember/
+files/_docx_extract/
+
+# Photos de galerie téléversées via l'admin (hors dépôt) — on garde le mode d'emploi
+files/public/images/*
+!files/public/images/LISEZ-MOI.txt
+
+# Sources binaires / médias informels (non servis par l'app)
+*.docx
+WhatsApp Image*.jpeg
