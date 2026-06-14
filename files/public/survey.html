@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2a900">
+<title>Sondage — WASCAL Cape Coast 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=Hanken+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<style>
+  .sheet{max-width:640px;margin:18px auto;padding:0 16px 48px;}
+  .step h2{font-size:clamp(1.4rem,5vw,1.7rem);margin:0 0 2px;outline:none;}
+  .step .sub{color:var(--muted);margin:0 0 18px;font-weight:700;}
+  .field{margin-bottom:22px;}
+  .nav-btns{display:flex;justify-content:space-between;gap:12px;margin-top:8px;}
+  .nav-btns .btn{flex:0 0 auto;}
+  .nav-btns .grow{flex:1 1 auto;justify-content:center;}
+  /* comité : grande puce pleine largeur */
+  .comm{display:grid;gap:10px;}
+  .comm .chip{width:100%;padding:14px 16px;border-radius:14px;align-items:flex-start;}
+  .comm .chip .e{font-size:24px;line-height:1;}
+  .comm .chip .ctxt{display:flex;flex-direction:column;gap:1px;}
+  .comm .chip[aria-checked=true]{background:var(--cream2);box-shadow:4px 4px 0 var(--ink);}
+  /* idées proposées */
+  .proprow{display:flex;gap:8px;align-items:stretch;}
+  .proprow .btn{flex:0 0 auto;}
+  .prop{background:var(--cream2);border-color:var(--green);}
+  .done{text-align:center;padding:36px 8px;}
+  .done .big{font-size:58px;line-height:1;}
+  @media(max-width:430px){
+    .proprow{flex-direction:column;}
+    .proprow .btn{width:100%;justify-content:center;}
+    .nav-btns{flex-direction:column-reverse;}
+    .nav-btns .btn{width:100%;justify-content:center;}
+  }
+</style>
+</head>
+<body>
+<div class="kente"></div>
+<nav class="nav">
+  <a class="brand" href="/"><span style="font-size:24px" aria-hidden="true">🌍</span><span><b>WASCAL</b><br><span class="tag">Cape Coast 2026</span></span></a>
+  <a class="btn btn-ghost" href="/">← Accueil</a>
+</nav>
+
+<main class="sheet">
+  <div class="steps" id="steps" role="progressbar" aria-label="Progression du sondage" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+    <div class="s on"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+  </div>
+  <div id="err" class="alert alert-err hide" role="alert" style="margin-bottom:14px"></div>
+
+  <div class="card" id="cardbox">
+
+    <!-- Étape 1 — Identité -->
+    <section class="step" data-step="0" aria-labelledby="h0">
+      <h2 id="h0" tabindex="-1">👋 Faisons connaissance</h2>
+      <p class="sub">Étape 1 sur 4 · Qui es-tu ?</p>
+      <div class="field">
+        <label class="fld" for="full_name">Nom complet</label>
+        <input type="text" id="full_name" placeholder="Prénom Nom" autocomplete="name" autocapitalize="words" enterkeyhint="next">
+      </div>
+      <div class="field">
+        <span class="fld" id="lbl-del">Ta délégation</span>
+        <div class="chips" id="delegations" role="radiogroup" aria-labelledby="lbl-del"></div>
+      </div>
+      <div class="field">
+        <span class="fld" id="lbl-floor">Ton logement</span>
+        <div class="chips" id="floors" role="radiogroup" aria-labelledby="lbl-floor"></div>
+      </div>
+      <div class="nav-btns"><span></span><button class="btn btn-primary grow" data-next>Continuer →</button></div>
+    </section>
+
+    <!-- Étape 2 — Comité -->
+    <section class="step hide" data-step="1" aria-labelledby="h1">
+      <h2 id="h1" tabindex="-1">🧩 Ton comité</h2>
+      <p class="sub">Étape 2 sur 4 · Où veux-tu t'investir en priorité ?</p>
+      <div class="comm" id="committees" role="radiogroup" aria-label="Comité souhaité"></div>
+      <p class="muted" style="font-size:13px;margin-top:12px">Tout le monde tournera sur les 4 comités au fil des mois — ici, indique ton point de départ préféré.</p>
+      <div class="nav-btns"><button class="btn" data-prev>← Retour</button><button class="btn btn-primary grow" data-next>Continuer →</button></div>
+    </section>
+
+    <!-- Étape 3 — Activités & talents -->
+    <section class="step hide" data-step="2" aria-labelledby="h2b">
+      <h2 id="h2b" tabindex="-1">✨ Les activités & tes talents</h2>
+      <p class="sub">Étape 3 sur 4 · Coche celles qui te tentent — et propose les tiennes !</p>
+      <div class="field">
+        <span class="fld" id="lbl-act">Les activités qu'on devrait faire ensemble</span>
+        <div class="chips" id="activities" role="group" aria-labelledby="lbl-act"></div>
+      </div>
+      <div class="field">
+        <label class="fld" for="propInput">💡 Propose tes propres idées</label>
+        <div class="proprow">
+          <input type="text" id="propInput" placeholder="Ex. atelier batik, match contre les Ghanéens…" maxlength="80" enterkeyhint="done" aria-describedby="prop-help">
+          <button type="button" class="btn" id="propAdd">Ajouter</button>
+        </div>
+        <div class="chips" id="proposed" style="margin-top:10px" aria-label="Idées proposées" aria-live="polite"></div>
+        <p class="muted" id="prop-help" style="font-size:12px;margin:6px 0 0">Appuie sur Entrée ou « Ajouter ». Clique sur une idée pour la retirer.</p>
+      </div>
+      <div class="field">
+        <span class="fld" id="lbl-tal">Tes talents à partager</span>
+        <div class="chips" id="talents" role="group" aria-labelledby="lbl-tal"></div>
+      </div>
+      <div class="nav-btns"><button class="btn" data-prev>← Retour</button><button class="btn btn-primary grow" data-next>Continuer →</button></div>
+    </section>
+
+    <!-- Étape 4 — Pratique -->
+    <section class="step hide" data-step="3" aria-labelledby="h3">
+      <h2 id="h3" tabindex="-1">🎯 Derniers détails</h2>
+      <p class="sub">Étape 4 sur 4 · Pour bien t'accompagner</p>
+      <div class="field">
+        <span class="fld" id="lbl-lvl">Ton niveau d'anglais (auto-évaluation)</span>
+        <div class="chips" id="levels" role="radiogroup" aria-labelledby="lbl-lvl"></div>
+      </div>
+      <div class="field">
+        <label class="fld" for="dietary">Régime / allergies alimentaires <span class="muted">(facultatif)</span></label>
+        <input type="text" id="dietary" placeholder="Ex. végétarien, pas de fruits de mer…">
+      </div>
+      <div class="field">
+        <label class="fld" for="notes">Un mot, une idée, une envie ? <span class="muted">(facultatif)</span></label>
+        <textarea id="notes" placeholder="Tout ce que tu veux nous dire…"></textarea>
+      </div>
+      <div class="nav-btns"><button class="btn" data-prev>← Retour</button><button class="btn btn-primary grow" id="submitBtn">Envoyer ✓</button></div>
+    </section>
+
+    <!-- Confirmation -->
+    <section class="step hide done" data-step="done" aria-labelledby="hdone">
+      <div class="big" aria-hidden="true">🎉</div>
+      <h2 id="hdone" tabindex="-1">Merci, c'est enregistré !</h2>
+      <p class="sub" style="color:var(--ink)">Ta réponse nous aide à former des comités équilibrés. À très vite pour l'aventure !</p>
+      <a class="btn btn-primary" href="/">Retour à l'accueil</a>
+    </section>
+
+  </div>
+  <p class="muted center" style="font-size:13px;margin-top:14px">Have fun in English 🌍</p>
+</main>
+
+<script type="module">
+import { DELEGATIONS, FLOORS, COMMITTEES, ACTIVITIES, TALENTS, ENGLISH_LEVELS, flagSVG, esc } from "/shared.js";
+
+const DONE_KEY = "wascal_survey_done";
+const state = { full_name:"", delegation:"", floor:"", committee:"", activities:new Set(), proposed:[], talents:new Set(), english_level:"", dietary:"", notes:"" };
+let step = 0;
+
+const errBox = document.getElementById("err");
+const showErr = (msg)=>{ if(!msg){errBox.classList.add("hide");return;} errBox.textContent=msg; errBox.classList.remove("hide"); errBox.scrollIntoView({block:"nearest",behavior:"smooth"}); };
+const clearErr = ()=>errBox.classList.add("hide");
+
+// --- Rendu des choix (en <button> : clavier + a11y natifs) ------------------
+function chipBtn(val, inner, role){
+  return `<button type="button" class="chip" role="${role}" aria-checked="false" data-val="${esc(val)}">${inner}</button>`;
+}
+const fill = (id, items, role, withFlag)=>{
+  document.getElementById(id).innerHTML = items.map(v =>
+    chipBtn(v, (withFlag?flagSVG(v,24):"")+`<span>${esc(v)}</span>`, role)).join("");
+};
+fill("delegations", DELEGATIONS, "radio", true);
+fill("floors", FLOORS, "radio", false);
+fill("levels", ENGLISH_LEVELS, "radio", false);
+fill("activities", ACTIVITIES, "checkbox", false);
+fill("talents", TALENTS, "checkbox", false);
+document.getElementById("committees").innerHTML = COMMITTEES.map(c =>
+  `<button type="button" class="chip" role="radio" aria-checked="false" data-val="${esc(c.name)}" style="border-color:${c.color}">
+     <span class="e" aria-hidden="true">${c.emoji}</span>
+     <span class="ctxt"><b>${esc(c.name)}</b><span class="muted" style="font-weight:700;font-size:13px">${esc(c.tag)}</span></span>
+   </button>`).join("");
+
+function single(id, set){
+  const box=document.getElementById(id);
+  box.addEventListener("click",(e)=>{
+    const c=e.target.closest(".chip"); if(!c) return;
+    box.querySelectorAll(".chip").forEach((x)=>{x.classList.remove("on");x.setAttribute("aria-checked","false");});
+    c.classList.add("on"); c.setAttribute("aria-checked","true"); set(c.dataset.val); clearErr();
+  });
+}
+function multi(id, theSet){
+  const box=document.getElementById(id);
+  box.addEventListener("click",(e)=>{
+    const c=e.target.closest(".chip"); if(!c) return;
+    const on=c.classList.toggle("on"); c.setAttribute("aria-checked",on?"true":"false");
+    if(on) theSet.add(c.dataset.val); else theSet.delete(c.dataset.val);
+  });
+}
+single("delegations",(v)=>state.delegation=v);
+single("floors",(v)=>state.floor=v);
+single("levels",(v)=>state.english_level=v);
+single("committees",(v)=>state.committee=v);
+multi("activities",state.activities);
+multi("talents",state.talents);
+
+// --- Idées proposées (puces supprimables) ----------------------------------
+const propInput=document.getElementById("propInput");
+const propBox=document.getElementById("proposed");
+function renderProposed(){
+  propBox.innerHTML=state.proposed.map((a,i)=>
+    `<button type="button" class="chip prop" data-i="${i}" aria-label="Retirer l'idée : ${esc(a)}">✦ ${esc(a)} <span aria-hidden="true" style="font-weight:900">×</span></button>`).join("");
+}
+function addProposed(){
+  const v=propInput.value.trim(); if(!v) return;
+  if(state.proposed.length>=20){ showErr("20 idées maximum, c'est déjà beaucoup 😊"); return; }
+  if(state.proposed.some((x)=>x.toLowerCase()===v.toLowerCase())){ propInput.value=""; return; }
+  state.proposed.push(v); propInput.value=""; renderProposed(); propInput.focus();
+}
+document.getElementById("propAdd").addEventListener("click",addProposed);
+propInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); addProposed(); } });
+propBox.addEventListener("click",(e)=>{ const c=e.target.closest(".chip"); if(!c) return; state.proposed.splice(Number(c.dataset.i),1); renderProposed(); });
+
+document.getElementById("full_name").addEventListener("input",(e)=>{state.full_name=e.target.value;clearErr();});
+document.getElementById("dietary").addEventListener("input",(e)=>state.dietary=e.target.value);
+document.getElementById("notes").addEventListener("input",(e)=>state.notes=e.target.value);
+
+// --- Navigation entre étapes ------------------------------------------------
+function show(s){
+  document.querySelectorAll(".step").forEach((el)=>el.classList.add("hide"));
+  const sel = s==="done" ? '[data-step="done"]' : `[data-step="${s}"]`;
+  const panel=document.querySelector(sel); panel.classList.remove("hide");
+  document.querySelectorAll("#steps .s").forEach((el,i)=>el.classList.toggle("on", typeof s==="number" && i<=s));
+  if(typeof s==="number") document.getElementById("steps").setAttribute("aria-valuenow", s+1);
+  clearErr();
+  const h=panel.querySelector("h2"); if(h) h.focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function firstInvalidFocus(id){ const el=document.getElementById(id); if(el) (el.querySelector?.(".chip")||el).focus(); }
+function validate(s){
+  if(s===0){
+    if(state.full_name.trim().length<2) return {msg:"Indique ton nom complet.",focus:"full_name"};
+    if(!state.delegation) return {msg:"Choisis ta délégation.",focus:"delegations"};
+    if(!state.floor) return {msg:"Choisis ton logement.",focus:"floors"};
+  }
+  if(s===1 && !state.committee) return {msg:"Choisis un comité.",focus:"committees"};
+  if(s===3 && !state.english_level) return {msg:"Indique ton niveau d'anglais.",focus:"levels"};
+  return null;
+}
+
+document.getElementById("cardbox").addEventListener("click",(e)=>{
+  if(e.target.matches("[data-next]")){
+    const err=validate(step);
+    if(err){ showErr(err.msg); firstInvalidFocus(err.focus); return; }
+    step++; show(step);
+  }
+  if(e.target.matches("[data-prev]")){ step--; show(step); }
+});
+
+// --- Envoi ------------------------------------------------------------------
+document.getElementById("submitBtn").addEventListener("click", async ()=>{
+  const err=validate(3); if(err){ showErr(err.msg); firstInvalidFocus(err.focus); return; }
+  const btn=document.getElementById("submitBtn"); btn.disabled=true; btn.textContent="Envoi…";
+  const payload={
+    full_name:state.full_name.trim(), delegation:state.delegation, floor:state.floor,
+    committee_rank:[state.committee],
+    activities:[...state.activities], proposed_activities:[...state.proposed], talents:[...state.talents],
+    english_level:state.english_level, dietary:state.dietary.trim(), notes:state.notes.trim(),
+  };
+  try{
+    const res=await fetch("/api/responses",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok || !data.ok) throw new Error((data.errors||[data.error||"Erreur inconnue"]).join(" "));
+    try{ localStorage.setItem(DONE_KEY,"1"); }catch{}
+    show("done");
+  }catch(ex){
+    showErr("Échec de l'envoi : "+ex.message); btn.disabled=false; btn.textContent="Envoyer ✓";
+  }
+});
+
+// --- Anti-doublon (même appareil) ------------------------------------------
+try{
+  if(localStorage.getItem(DONE_KEY)==="1"){
+    document.getElementById("cardbox").innerHTML =
+      `<section class="step done"><div class="big" aria-hidden="true">✅</div><h2 tabindex="-1">Tu as déjà répondu</h2>
+       <p class="sub" style="color:var(--ink)">Merci ! Une seule réponse par personne suffit.</p>
+       <a class="btn btn-primary" href="/">Retour à l'accueil</a>
+       <p style="margin-top:18px"><button class="btn btn-ghost" id="again" style="font-size:13px">Répondre quand même</button></p></section>`;
+    document.getElementById("steps").classList.add("hide");
+    document.getElementById("again").addEventListener("click",()=>{ try{localStorage.removeItem(DONE_KEY);}catch{} location.reload(); });
+  }
+}catch{}
+</script>
+</body>
+</html>

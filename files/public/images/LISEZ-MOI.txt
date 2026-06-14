@@ -1,0 +1,20 @@
+GALERIE — dossier des photos
+=============================
+
+Ce dossier reçoit AUTOMATIQUEMENT les photos téléversées depuis l'espace admin.
+
+Tu n'as normalement RIEN à faire ici à la main :
+
+  1. Va sur  /admin  et connecte-toi.
+  2. Section « 🖼️ Galerie du site » :
+       - « ＋ Nouvel album » pour créer un album (titre, couleur, lien Drive).
+       - « ⬆ Ajouter des photos » pour téléverser (les images sont
+         redimensionnées toutes seules à l'envoi → fichiers légers).
+       - Saisis une légende sous chaque photo, colle le lien Drive de l'album,
+         et le lien Drive « album complet du groupe » (bouton global).
+  3. La page d'accueil (/) se met à jour aussitôt (elle lit /api/gallery).
+
+Les fichiers ici sont nommés  g<album>-xxxxxx.jpg  et référencés en base
+(table gallery_photos). Supprimer une photo depuis l'admin efface aussi le
+fichier. Ne pas renommer/supprimer les fichiers à la main (la base ne le saurait
+pas) — passe toujours par l'admin.
