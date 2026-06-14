@@ -40,6 +40,126 @@ if (!cols.includes("assigned_committee")) {
   db.exec("ALTER TABLE responses ADD COLUMN assigned_committee TEXT");
 }
 
+// --- Galerie (albums + photos) + réglages -----------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gallery_albums (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT    NOT NULL,
+    color      TEXT    NOT NULL DEFAULT '#e85d1b',
+    drive_url  TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS gallery_photos (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    album_id   INTEGER NOT NULL,
+    filename   TEXT    NOT NULL,
+    caption    TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT    NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_gphotos_album ON gallery_photos(album_id);
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+  );
+`);
+
+const gq = {
+  albums:        db.prepare("SELECT * FROM gallery_albums ORDER BY sort_order, id"),
+  photosOf:      db.prepare("SELECT * FROM gallery_photos WHERE album_id = ? ORDER BY sort_order, id"),
+  countAlbums:   db.prepare("SELECT COUNT(*) AS n FROM gallery_albums"),
+  maxOrder:      db.prepare("SELECT COALESCE(MAX(sort_order),-1) AS m FROM gallery_albums"),
+  insAlbum:      db.prepare("INSERT INTO gallery_albums (title,color,drive_url,sort_order,created_at) VALUES (@title,@color,@drive_url,@sort_order,@created_at)"),
+  updAlbum:      db.prepare("UPDATE gallery_albums SET title=@title, color=@color, drive_url=@drive_url WHERE id=@id"),
+  getAlbum:      db.prepare("SELECT * FROM gallery_albums WHERE id = ?"),
+  delAlbum:      db.prepare("DELETE FROM gallery_albums WHERE id = ?"),
+  photoFiles:    db.prepare("SELECT filename FROM gallery_photos WHERE album_id = ?"),
+  delPhotosOf:   db.prepare("DELETE FROM gallery_photos WHERE album_id = ?"),
+  maxPhotoOrder: db.prepare("SELECT COALESCE(MAX(sort_order),-1) AS m FROM gallery_photos WHERE album_id = ?"),
+  insPhoto:      db.prepare("INSERT INTO gallery_photos (album_id,filename,caption,sort_order,created_at) VALUES (@album_id,@filename,@caption,@sort_order,@created_at)"),
+  getPhoto:      db.prepare("SELECT * FROM gallery_photos WHERE id = ?"),
+  delPhoto:      db.prepare("DELETE FROM gallery_photos WHERE id = ?"),
+  updCaption:    db.prepare("UPDATE gallery_photos SET caption = @caption WHERE id = @id"),
+};
+
+// Crée les albums par défaut (un par comité) si la galerie est vide.
+export function seedGalleryIfEmpty(defaults) {
+  if (gq.countAlbums.get().n > 0) return;
+  const now = new Date().toISOString();
+  defaults.forEach((d, i) => gq.insAlbum.run({
+    title: d.title, color: d.color || "#e85d1b", drive_url: null, sort_order: i, created_at: now,
+  }));
+}
+
+export function listGallery() {
+  return gq.albums.all().map((a) => ({ ...a, photos: gq.photosOf.all(a.id) }));
+}
+
+export function albumExists(id) {
+  return !!gq.getAlbum.get(Number(id));
+}
+
+export function createAlbum({ title, color, drive_url }) {
+  const info = gq.insAlbum.run({
+    title: String(title).trim(),
+    color: color || "#e85d1b",
+    drive_url: drive_url ? String(drive_url) : null,
+    sort_order: gq.maxOrder.get().m + 1,
+    created_at: new Date().toISOString(),
+  });
+  return Number(info.lastInsertRowid);
+}
+
+export function updateAlbum(id, { title, color, drive_url }) {
+  return gq.updAlbum.run({
+    id: Number(id), title: String(title).trim(), color: color || "#e85d1b",
+    drive_url: drive_url ? String(drive_url) : null,
+  }).changes > 0;
+}
+
+// Supprime un album ; renvoie les fichiers de ses photos (à effacer du disque).
+export function deleteAlbum(id) {
+  const files = gq.photoFiles.all(Number(id)).map((r) => r.filename);
+  gq.delPhotosOf.run(Number(id));
+  gq.delAlbum.run(Number(id));
+  return files;
+}
+
+export function addPhoto({ album_id, filename, caption }) {
+  const info = gq.insPhoto.run({
+    album_id: Number(album_id), filename: String(filename),
+    caption: caption ? String(caption).slice(0, 160) : null,
+    sort_order: gq.maxPhotoOrder.get(Number(album_id)).m + 1,
+    created_at: new Date().toISOString(),
+  });
+  return Number(info.lastInsertRowid);
+}
+
+// Supprime une photo ; renvoie son fichier (à effacer du disque) ou null.
+export function deletePhoto(id) {
+  const row = gq.getPhoto.get(Number(id));
+  if (!row) return null;
+  gq.delPhoto.run(Number(id));
+  return row.filename;
+}
+
+export function updatePhotoCaption(id, caption) {
+  return gq.updCaption.run({
+    id: Number(id), caption: caption ? String(caption).slice(0, 160) : null,
+  }).changes > 0;
+}
+
+const getSettingStmt = db.prepare("SELECT value FROM settings WHERE key = ?");
+const setSettingStmt = db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+export function getSetting(key) {
+  const r = getSettingStmt.get(String(key));
+  return r ? r.value : null;
+}
+export function setSetting(key, value) {
+  setSettingStmt.run(String(key), value == null ? null : String(value));
+}
+
 const insertStmt = db.prepare(`
   INSERT INTO responses
     (created_at, full_name, delegation, floor, committee_rank, activities, proposed_activities, talents, english_level, dietary, notes)

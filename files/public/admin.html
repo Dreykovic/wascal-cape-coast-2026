@@ -87,6 +87,20 @@
   <p class="muted" style="margin-top:0">Chaque comité garde ses membres et tourne sur les 4 rôles.</p>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="rot" id="rotation" style="min-width:520px"></table></div>
 
+  <h2 style="margin:30px 0 8px">🖼️ Galerie du site</h2>
+  <p class="muted" style="margin-top:0">Crée des albums, téléverse des photos (redimensionnées automatiquement à l'envoi) et colle les liens Google Drive. Tout s'affiche aussitôt sur la page d'accueil.</p>
+
+  <div class="card" style="margin-bottom:16px">
+    <label class="fld" for="driveAll">Lien Drive « album complet du groupe » (bouton global, optionnel)</label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <input type="text" id="driveAll" placeholder="https://drive.google.com/…" style="flex:1 1 260px">
+      <button class="btn btn-ink" id="driveAllSave">Enregistrer</button>
+    </div>
+  </div>
+
+  <div id="albums"></div>
+  <button class="btn btn-primary" id="addAlbumBtn" style="margin-top:4px">＋ Nouvel album</button>
+
   <details class="raw">
     <summary>Voir les réponses brutes (<span id="rawcount">0</span>)</summary>
     <div style="overflow:auto"><table class="rawtable" id="rawtable"></table></div>
@@ -124,6 +138,7 @@ async function enterApp(){
   document.getElementById("appView").classList.remove("hide");
   document.getElementById("logoutBtn").classList.remove("hide");
   await loadData(); render();
+  await loadGallery();
 }
 
 // --- Données + dédup --------------------------------------------------------
@@ -258,8 +273,148 @@ function render(){
 
 // Déplacement via les menus (délégation d'événement)
 document.getElementById("appView").addEventListener("change",(e)=>{
-  const sel=e.target.closest(".movesel"); if(sel) onMove(sel);
+  const sel=e.target.closest(".movesel:not(.galcolor)"); if(sel) onMove(sel);
 });
+
+// --- Galerie du site --------------------------------------------------------
+const COLOR_CHOICES = [
+  {name:"Teal", v:"#0e8c7a"},{name:"Prune",v:"#8a2d5d"},{name:"Vert",v:"#1c7a45"},
+  {name:"Ambre",v:"#e85d1b"},{name:"Or",   v:"#f2a900"},{name:"Rouge",v:"#c5302b"},
+  {name:"Bleu", v:"#1e3f8f"},{name:"Encre",v:"#231a10"},
+];
+let gallery = { albums: [], drive_all: "" };
+
+async function loadGallery(){
+  const r = await fetch("/api/admin/gallery"); const d = await r.json();
+  gallery.albums = d.albums || []; gallery.drive_all = d.drive_all || "";
+  document.getElementById("driveAll").value = gallery.drive_all;
+  renderGallery();
+}
+
+function colorSelect(value){
+  return `<select class="movesel galcolor" aria-label="Couleur de l'album">`+
+    COLOR_CHOICES.map(c=>`<option value="${c.v}" ${c.v.toLowerCase()===String(value).toLowerCase()?"selected":""}>${c.name}</option>`).join("")+
+    `</select>`;
+}
+
+function renderGallery(){
+  const box=document.getElementById("albums");
+  box.innerHTML = gallery.albums.map(a=>`
+    <div class="card galalb" data-id="${a.id}" style="margin-bottom:14px;border-left:10px solid ${esc(a.color)}">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1 1 200px"><label class="fld">Titre</label>
+          <input type="text" class="galtitle" value="${esc(a.title)}"></div>
+        <div style="flex:0 0 130px"><label class="fld">Couleur</label>${colorSelect(a.color)}</div>
+        <div style="flex:2 1 260px"><label class="fld">Lien Drive de l'album</label>
+          <input type="text" class="galdrive" value="${esc(a.drive_url)}" placeholder="https://drive.google.com/…"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ink galsave">💾 Enregistrer</button>
+        <label class="btn galupload">⬆ Ajouter des photos<input type="file" accept="image/*" multiple hidden class="galfile"></label>
+        <button class="btn btn-ghost galdelete" style="color:var(--red)">🗑 Supprimer</button>
+        <span class="muted galstatus"></span>
+      </div>
+      <div class="galphotos" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+        ${a.photos.map(p=>`
+          <div class="galthumb" data-id="${p.id}" style="width:120px">
+            <div style="position:relative;width:120px;height:90px;border:2.5px solid var(--ink);border-radius:10px;overflow:hidden">
+              <img src="/${esc(p.src)}" alt="${esc(p.cap)}" style="width:100%;height:100%;object-fit:cover">
+              <button class="galphotodel" title="Supprimer la photo" style="position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:2px solid var(--ink);background:#fff;cursor:pointer;font-weight:900;line-height:1;padding:0">×</button>
+            </div>
+            <input type="text" class="galcap" value="${esc(p.cap)}" placeholder="Légende" style="margin-top:4px;font-size:12px;padding:6px 8px;min-height:0">
+          </div>`).join("") || '<span class="muted">Aucune photo — clique sur « Ajouter des photos ».</span>'}
+      </div>
+    </div>`).join("") || '<p class="muted">Aucun album. Clique sur « Nouvel album ».</p>';
+}
+
+const galAlbumEl = (node)=>node.closest(".galalb");
+function galStatus(node, msg){ const s=galAlbumEl(node).querySelector(".galstatus"); s.textContent=msg||""; }
+
+document.getElementById("albums").addEventListener("click", async (e)=>{
+  const save=e.target.closest(".galsave"); if(save) return saveAlbum(save);
+  const del=e.target.closest(".galdelete"); if(del) return deleteAlbumUI(del);
+  const pdel=e.target.closest(".galphotodel"); if(pdel) return deletePhotoUI(pdel);
+});
+document.getElementById("albums").addEventListener("change", async (e)=>{
+  const file=e.target.closest(".galfile"); if(file) return uploadFiles(file);
+  const cap=e.target.closest(".galcap"); if(cap) return saveCaption(cap);
+});
+document.getElementById("addAlbumBtn").addEventListener("click", addAlbum);
+document.getElementById("driveAllSave").addEventListener("click", saveDriveAll);
+
+async function saveAlbum(btn){
+  const el=galAlbumEl(btn), id=Number(el.dataset.id);
+  const title=el.querySelector(".galtitle").value;
+  const color=el.querySelector(".galcolor").value;
+  const drive_url=el.querySelector(".galdrive").value;
+  galStatus(btn,"Enregistrement…");
+  const r=await fetch(`/api/admin/gallery/album/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,color,drive_url})});
+  if(r.ok){ el.style.borderLeftColor=color; galStatus(btn,"✓ enregistré"); setTimeout(()=>galStatus(btn,""),1500); }
+  else { const d=await r.json().catch(()=>({})); galStatus(btn,"⚠ "+(d.error||"échec")); }
+}
+
+async function addAlbum(){
+  const r=await fetch("/api/admin/gallery/album",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Nouvel album",color:"#e85d1b",drive_url:""})});
+  if(r.ok) await loadGallery();
+}
+
+async function deleteAlbumUI(btn){
+  const id=Number(galAlbumEl(btn).dataset.id);
+  if(!confirm("Supprimer cet album et toutes ses photos ? Cette action est définitive.")) return;
+  const r=await fetch(`/api/admin/gallery/album/${id}`,{method:"DELETE"});
+  if(r.ok) await loadGallery();
+}
+
+async function deletePhotoUI(btn){
+  const thumb=btn.closest(".galthumb"); const id=Number(thumb.dataset.id);
+  const r=await fetch(`/api/admin/gallery/photo/${id}`,{method:"DELETE"});
+  if(r.ok) thumb.remove();
+}
+
+async function saveCaption(input){
+  const id=Number(input.closest(".galthumb").dataset.id);
+  await fetch(`/api/admin/gallery/photo/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:input.value})});
+}
+
+async function uploadFiles(input){
+  const el=galAlbumEl(input), id=Number(el.dataset.id);
+  const files=[...input.files]; input.value="";
+  let done=0;
+  for(const file of files){
+    galStatus(input, `Envoi ${++done}/${files.length}…`);
+    try{
+      const dataUrl=await resizeImage(file, 1600, 0.82);
+      const r=await fetch("/api/admin/gallery/photo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({album_id:id, dataUrl, caption:""})});
+      if(!r.ok){ const d=await r.json().catch(()=>({})); galStatus(input,"⚠ "+(d.error||"échec")); }
+    }catch(err){ galStatus(input,"⚠ "+file.name+" ignoré"); }
+  }
+  await loadGallery();
+}
+
+// Redimensionne l'image dans le navigateur (max 1600 px, JPEG) → data-URL légère.
+function resizeImage(file, maxDim, quality){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      URL.revokeObjectURL(img.src);
+      let w=img.naturalWidth, h=img.naturalHeight;
+      if(Math.max(w,h)>maxDim){ const s=maxDim/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL("image/jpeg", quality));
+    };
+    img.onerror=()=>reject(new Error("image illisible"));
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+async function saveDriveAll(){
+  const drive_all=document.getElementById("driveAll").value;
+  const btn=document.getElementById("driveAllSave");
+  const r=await fetch("/api/admin/gallery/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({drive_all})});
+  btn.textContent = r.ok ? "✓ Enregistré" : "⚠ Échec";
+  setTimeout(()=>btn.textContent="Enregistrer",1500);
+}
 
 checkAuth();
 </script>

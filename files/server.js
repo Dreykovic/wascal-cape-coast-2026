@@ -4,11 +4,18 @@ import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyCookie from "@fastify/cookie";
 import { timingSafeEqual, randomBytes } from "node:crypto";
+import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { insertResponse, listResponses, assignCommittee } from "./db.js";
+import {
+  insertResponse, listResponses, assignCommittee,
+  seedGalleryIfEmpty, listGallery, albumExists, createAlbum, updateAlbum,
+  deleteAlbum, addPhoto, deletePhoto, updatePhotoCaption, getSetting, setSetting,
+} from "./db.js";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
+const IMAGES_DIR = join(ROOT, "public", "images");
+mkdirSync(IMAGES_DIR, { recursive: true });
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "wascal2026";
@@ -26,6 +33,36 @@ export const COMMITTEES = [
 ];
 const FLOORS = ["Étage (filles)", "Rez-de-chaussée (garçons)"];
 const ENGLISH_LEVELS = ["Débutant", "Intermédiaire", "Avancé"];
+// Albums de galerie créés au premier démarrage (Club d'anglais + un par comité, couleurs de charte).
+const GALLERY_DEFAULTS = [
+  { title: "Club d'anglais",       color: "#f2a900" },
+  { title: "Sorties & Excursions", color: "#0e8c7a" },
+  { title: "Soirées & Jeux",       color: "#8a2d5d" },
+  { title: "Sport & Bien-être",    color: "#1c7a45" },
+  { title: "Culture & Échanges",   color: "#e85d1b" },
+];
+seedGalleryIfEmpty(GALLERY_DEFAULTS);
+
+// --- Galerie : helpers ------------------------------------------------------
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const cleanColor = (c) => (HEX.test(String(c || "")) ? String(c) : "#e85d1b");
+const cleanUrl = (u) => {
+  const s = String(u || "").trim();
+  return /^https?:\/\//i.test(s) ? s.slice(0, 600) : "";
+};
+function parseDataUrl(dataUrl) {
+  const m = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/.exec(String(dataUrl || ""));
+  if (!m) return null;
+  const raw = m[1].toLowerCase();
+  const ext = raw === "jpeg" || raw === "jpg" ? "jpg" : raw;
+  const buf = Buffer.from(m[2].replace(/\s+/g, ""), "base64");
+  return buf.length ? { ext, buf } : null;
+}
+function removeImage(filename) {
+  const base = String(filename).replace(/[/\\]/g, ""); // pas de remontée de chemin
+  const p = join(IMAGES_DIR, base);
+  try { if (existsSync(p)) unlinkSync(p); } catch { /* déjà absent */ }
+}
 
 const app = Fastify({ logger: true, trustProxy: true });
 await app.register(fastifyCookie, { secret: COOKIE_SECRET });
@@ -89,6 +126,16 @@ app.post("/api/responses", async (req, reply) => {
   return reply.code(201).send({ ok: true, id });
 });
 
+// --- Galerie : API publique (lue par index.html) ---------------------------
+app.get("/api/gallery", async () => ({
+  ok: true,
+  albums: listGallery().map((a) => ({
+    id: a.id, title: a.title, color: a.color, drive_url: a.drive_url || "",
+    photos: a.photos.map((p) => ({ src: "images/" + p.filename, cap: p.caption || "" })),
+  })),
+  drive_all: getSetting("drive_all") || "",
+}));
+
 // --- Auth admin (mot de passe unique → cookie signé) -----------------------
 function isAuthed(req) {
   const raw = req.cookies?.[COOKIE_NAME];
@@ -136,6 +183,74 @@ app.post("/api/admin/assign", { preHandler: requireAdmin }, async (req, reply) =
   }
   const ok = assignCommittee(id, committee);
   if (!ok) return reply.code(404).send({ ok: false, error: "Réponse introuvable." });
+  return { ok: true };
+});
+
+// --- Galerie : API admin (gestion albums + photos + lien global) -----------
+app.get("/api/admin/gallery", { preHandler: requireAdmin }, async () => ({
+  ok: true,
+  albums: listGallery().map((a) => ({
+    id: a.id, title: a.title, color: a.color, drive_url: a.drive_url || "",
+    photos: a.photos.map((p) => ({ id: p.id, src: "images/" + p.filename, cap: p.caption || "" })),
+  })),
+  drive_all: getSetting("drive_all") || "",
+}));
+
+app.post("/api/admin/gallery/album", { preHandler: requireAdmin }, async (req, reply) => {
+  const title = String(req.body?.title || "").trim().slice(0, 80);
+  if (title.length < 2) return reply.code(400).send({ ok: false, error: "Titre requis." });
+  const id = createAlbum({ title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url) });
+  return reply.code(201).send({ ok: true, id });
+});
+
+app.patch("/api/admin/gallery/album/:id", { preHandler: requireAdmin }, async (req, reply) => {
+  const id = Number(req.params.id);
+  const title = String(req.body?.title || "").trim().slice(0, 80);
+  if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  if (title.length < 2) return reply.code(400).send({ ok: false, error: "Titre requis." });
+  if (!albumExists(id)) return reply.code(404).send({ ok: false, error: "Album introuvable." });
+  updateAlbum(id, { title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url) });
+  return { ok: true };
+});
+
+app.delete("/api/admin/gallery/album/:id", { preHandler: requireAdmin }, async (req, reply) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  if (!albumExists(id)) return reply.code(404).send({ ok: false, error: "Album introuvable." });
+  for (const f of deleteAlbum(id)) removeImage(f);
+  return { ok: true };
+});
+
+// Upload : l'admin envoie l'image redimensionnée (canvas) en data-URL base64.
+app.post("/api/admin/gallery/photo", { preHandler: requireAdmin, bodyLimit: 12 * 1024 * 1024 }, async (req, reply) => {
+  const album_id = Number(req.body?.album_id);
+  if (!albumExists(album_id)) return reply.code(400).send({ ok: false, error: "Album invalide." });
+  const parsed = parseDataUrl(req.body?.dataUrl);
+  if (!parsed) return reply.code(400).send({ ok: false, error: "Image invalide (JPEG/PNG/WebP attendu)." });
+  if (parsed.buf.length > 6 * 1024 * 1024) return reply.code(413).send({ ok: false, error: "Image trop lourde (max 6 Mo)." });
+  const filename = `g${album_id}-${randomBytes(6).toString("hex")}.${parsed.ext}`;
+  writeFileSync(join(IMAGES_DIR, filename), parsed.buf);
+  const id = addPhoto({ album_id, filename, caption: req.body?.caption });
+  return reply.code(201).send({ ok: true, id, src: "images/" + filename });
+});
+
+app.patch("/api/admin/gallery/photo/:id", { preHandler: requireAdmin }, async (req, reply) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  updatePhotoCaption(id, req.body?.caption);
+  return { ok: true };
+});
+
+app.delete("/api/admin/gallery/photo/:id", { preHandler: requireAdmin }, async (req, reply) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  const filename = deletePhoto(id);
+  if (filename) removeImage(filename);
+  return { ok: true };
+});
+
+app.post("/api/admin/gallery/settings", { preHandler: requireAdmin }, async (req) => {
+  setSetting("drive_all", cleanUrl(req.body?.drive_all));
   return { ok: true };
 });
 
