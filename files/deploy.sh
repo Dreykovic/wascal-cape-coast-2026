@@ -57,7 +57,8 @@ if [ -f "$NGINX_CONF" ]; then
   if grep -q "client_max_body_size" "$NGINX_CONF"; then
     echo "  déjà présent dans $NGINX_CONF"
   else
-    sed -i '0,/server_name[^;]*;/s//&\n    client_max_body_size 12M;/' "$NGINX_CONF"
+    # Insère après CHAQUE server_name (blocs HTTP 80 ET HTTPS 443 créés par certbot)
+    sed -i 's/\(server_name[^;]*;\)/\1\n    client_max_body_size 12M;/' "$NGINX_CONF"
     if nginx -t 2>/dev/null; then
       systemctl reload nginx
       echo "  ajouté + nginx rechargé"
