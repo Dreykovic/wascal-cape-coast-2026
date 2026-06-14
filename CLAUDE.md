@@ -91,7 +91,8 @@ La **rotation sur 4 mois** reste affichée : chaque comité garde ses membres et
 La galerie de la page d'accueil est **pilotée par la base**, pas en dur. Tables `gallery_albums`
 (`title`, `color`, `drive_url`, `sort_order`) et `gallery_photos` (`album_id`, `filename`, `caption`,
 `sort_order`) ; le lien Drive global vit dans `settings` (clé `drive_all`). Au **premier démarrage**,
-`seedGalleryIfEmpty` crée 4 albums (un par comité). Le **nombre d'albums est libre** (grille `auto-fit`).
+`seedGalleryIfEmpty` crée 5 albums (Club d'anglais + un par comité). Le **nombre d'albums est libre**
+(grille `auto-fit`) : l'admin peut en ajouter/retirer librement.
 
 - **Public** : `GET /api/gallery` → albums + photos (`src` = `images/<fichier>`) + `drive_all`. `index.html`
   rend une **étagère d'albums** (couverture placeholder kente tant qu'il n'y a pas de photo) + **lightbox**
