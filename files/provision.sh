@@ -78,6 +78,9 @@ server {
     listen [::]:80;
     server_name wascal.birewa.com;
 
+    # Upload des photos de galerie (data-URL base64) — au-delà du 1 Mo par défaut
+    client_max_body_size 12M;
+
     location / {
         proxy_pass http://127.0.0.1:3300;
         proxy_http_version 1.1;
