@@ -9,7 +9,7 @@ dépendance native à compiler). Trois pages servies par le même process :
 | `/survey` | Sondage en 4 étapes → table `responses` | public |
 | `/admin` | Répartition en 4 comités équilibrés, rotation 4 mois, export CSV | **mot de passe** |
 
-API : `POST /api/responses` (public) · `/api/admin/*` (cookie de session signé).
+API : `POST /api/responses` · `GET /api/gallery` (public) · `/api/admin/*` (cookie de session signé).
 
 ## Prérequis
 
@@ -70,19 +70,26 @@ Développement avec rechargement : `node --env-file=.env --watch server.js`.
    ```nginx
    server {
      server_name wascal.exemple.org;
+     client_max_body_size 12M;   # uploads de photos de galerie (base64) > 1 Mo par défaut
      location / { proxy_pass http://127.0.0.1:3000; proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto $scheme; }
    }
    ```
 
 > `/admin` est protégé par le **mot de passe applicatif** (cookie signé) — plus besoin de basic-auth nginx.
-> Sauvegarde = copier `data/wascal.db` (un seul fichier).
+> **Galerie** : le service écrit les photos téléversées dans `public/images/` — ce dossier (et `data/`)
+> doit appartenir à l'utilisateur du service (`sudo chown -R www-data:www-data /var/www/wascal`).
+> Sauvegarde = `data/wascal.db` **+** le dossier `public/images/` (les photos téléversées).
 
 ## Notes d'architecture
 
 - **Front vanilla** (HTML/CSS/JS natif), aucun build. Charte partagée dans `public/app.css`,
   données communes (délégations, comités, drapeaux, RNG seedé) dans `public/shared.js` (module ES).
-- **Algorithme de répartition** (`admin.html` → `distribute()`) : 4 comités ≈ n/4, affectation au
-  comité demandé en équilibrant les délégations, surplus réaffecté au comité le plus libre / le moins
-  pourvu du pays. Mélange **seedé** (bouton « Relancer ») → re-tirages reproductibles.
+- **Répartition des comités** (`admin.html`) : chaque personne est dans son comité **effectif**
+  = comité assigné manuellement s'il existe, sinon comité demandé au sondage. **Pas de réaffectation
+  automatique** : l'admin équilibre à la main via un menu déroulant (`POST /api/admin/assign`, persisté).
+  Effectif vs cible (≈ n/4) affiché ; rotation déterministe sur 4 mois.
+- **Galerie** (`/` + `/admin`) : albums et photos pilotés par la base (`gallery_albums`, `gallery_photos`,
+  `settings`). L'admin crée des albums, téléverse des photos (redimensionnées côté navigateur, envoyées
+  en base64) et colle les liens Drive. La page d'accueil lit `GET /api/gallery`. Photos dans `public/images/`.
 - **Dédup** côté admin par `nom|délégation` normalisés (réponse la plus récente conservée).
 - Pas de fonctionnalité « devoirs » — hors périmètre, ne pas réintroduire.
