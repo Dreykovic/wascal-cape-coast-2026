@@ -32,11 +32,12 @@ signé. Base **SQLite** via le module intégré `node:sqlite` (**Node ≥ 22.5**
 
 | Chemin | Rôle |
 |---|---|
-| `files/server.js` | Serveur Fastify : pages, API publique (`POST /api/responses`), API admin (`/api/admin/*`) |
-| `files/db.js` | `node:sqlite` — table `responses`, migrations légères, `insertResponse` / `listResponses` |
-| `files/public/index.html` | Site informatif en **deck de slides** (hero, région, objectifs, club, activités, délégations, Ubuntu, galerie, calendrier, festival) — **public**. Page **autonome** (CSS+JS inline, n'utilise PAS `app.css`/`shared.js`), nav clavier/tactile/molette. Liens vers `/survey`. |
+| `files/server.js` | Serveur Fastify : pages, API publique (`POST /api/responses`, `GET /api/gallery`), API admin (`/api/admin/*`) |
+| `files/db.js` | `node:sqlite` — tables `responses`, `gallery_albums`, `gallery_photos`, `settings` ; migrations légères ; helpers réponses + galerie |
+| `files/public/index.html` | Site informatif en **deck de slides** (hero, région, objectifs, club, activités, délégations, Ubuntu, galerie, calendrier, festival) — **public**. Page **autonome** (CSS+JS inline, n'utilise PAS `app.css`/`shared.js`), nav clavier/tactile/molette. La **galerie** lit `GET /api/gallery` (albums + lightbox). Liens vers `/survey`. |
 | `files/public/survey.html` | Sondage 4 étapes → `POST /api/responses` — **public** |
-| `files/public/admin.html` | Répartition 4 comités, rotation 4 mois, idées proposées, export CSV — **protégé par mot de passe** |
+| `files/public/admin.html` | Répartition 4 comités, rotation 4 mois, idées proposées, **gestion de la galerie** (albums, upload photos, liens Drive), export CSV — **protégé par mot de passe** |
+| `files/public/images/` | Photos de galerie **téléversées via l'admin** (servies en statique ; nommées `g<album>-<hex>.jpg`). Gérées en base, ne pas y toucher à la main. |
 | `files/public/app.css` | Charte partagée (tokens `:root`, kente, stickers, formulaires) |
 | `files/public/shared.js` | Données + utilitaires partagés (module ES) |
 | `files/README.md` | Lancement local + déploiement VPS — **source de vérité du déploiement** |
@@ -84,6 +85,22 @@ déplacées, pour voir leur comité d'origine. Plus de seed / « Relancer » (l'
 
 La **rotation sur 4 mois** reste affichée : chaque comité garde ses membres et tourne sur les 4 rôles via
 `(g+m)%4`.
+
+### La galerie administrable (`admin.html` + `index.html`)
+
+La galerie de la page d'accueil est **pilotée par la base**, pas en dur. Tables `gallery_albums`
+(`title`, `color`, `drive_url`, `sort_order`) et `gallery_photos` (`album_id`, `filename`, `caption`,
+`sort_order`) ; le lien Drive global vit dans `settings` (clé `drive_all`). Au **premier démarrage**,
+`seedGalleryIfEmpty` crée 4 albums (un par comité). Le **nombre d'albums est libre** (grille `auto-fit`).
+
+- **Public** : `GET /api/gallery` → albums + photos (`src` = `images/<fichier>`) + `drive_all`. `index.html`
+  rend une **étagère d'albums** (couverture placeholder kente tant qu'il n'y a pas de photo) + **lightbox**
+  plein écran (garde `window.__lbOpen` pour ne pas déclencher la nav des slides).
+- **Admin** (gardé par `requireAdmin`) : `POST/PATCH/DELETE /api/admin/gallery/album`,
+  `POST/PATCH/DELETE /api/admin/gallery/photo`, `POST /api/admin/gallery/settings`.
+- **Upload sans dépendance** : l'admin **redimensionne la photo côté navigateur** (canvas → JPEG ~1600 px)
+  et l'envoie en **data-URL base64** ; le serveur la décode et l'écrit dans `public/images/` (route à
+  `bodyLimit` relevé). Supprimer une photo/un album efface aussi le(s) fichier(s) sur le disque.
 
 ## Identité visuelle (charte partagée)
 
