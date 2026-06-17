@@ -101,6 +101,10 @@
   <div id="albums"></div>
   <button class="btn btn-primary" id="addAlbumBtn" style="margin-top:4px">＋ Nouvel album</button>
 
+  <h2 style="margin:34px 0 8px">🔑 Accès des comités à leur galerie</h2>
+  <p class="muted" style="margin-top:0">Chaque comité (et le Club d'anglais) gère <strong>sa propre galerie</strong> sur <a href="/comite" target="_blank">/comite</a> avec un code partagé. Génère un code, copie-le et transmets-le aux responsables. Le code n'est affiché qu'une seule fois ; régénère-le si besoin (l'ancien cesse aussitôt de fonctionner).</p>
+  <div id="codes"></div>
+
   <details class="raw">
     <summary>Voir les réponses brutes (<span id="rawcount">0</span>)</summary>
     <div style="overflow:auto"><table class="rawtable" id="rawtable"></table></div>
@@ -110,7 +114,7 @@
 <div class="kente" style="margin-top:40px"></div>
 
 <script type="module">
-import { COMMITTEES, flagSVG, esc, norm } from "/shared.js";
+import { COMMITTEES, GALLERY_OWNERS, flagSVG, esc, norm } from "/shared.js";
 
 const NAMES = COMMITTEES.map(c=>c.name);
 const commOf = (name)=>COMMITTEES.find(c=>c.name===name);
@@ -282,19 +286,82 @@ const COLOR_CHOICES = [
   {name:"Ambre",v:"#e85d1b"},{name:"Or",   v:"#f2a900"},{name:"Rouge",v:"#c5302b"},
   {name:"Bleu", v:"#1e3f8f"},{name:"Encre",v:"#231a10"},
 ];
-let gallery = { albums: [], drive_all: "" };
+let gallery = { albums: [], drive_all: "", owners: [], codes: [] };
+const ownerName = (key)=>(gallery.owners.find(o=>o.key===key)||{}).name || "";
 
 async function loadGallery(){
-  const r = await fetch("/api/admin/gallery"); const d = await r.json();
+  const r = await fetch("/api/gallery/manage"); const d = await r.json();
   gallery.albums = d.albums || []; gallery.drive_all = d.drive_all || "";
+  gallery.owners = d.owners || GALLERY_OWNERS; gallery.codes = d.codes || [];
   document.getElementById("driveAll").value = gallery.drive_all;
   renderGallery();
+  renderCodes();
 }
 
 function colorSelect(value){
   return `<select class="movesel galcolor" aria-label="Couleur de l'album">`+
     COLOR_CHOICES.map(c=>`<option value="${c.v}" ${c.v.toLowerCase()===String(value).toLowerCase()?"selected":""}>${c.name}</option>`).join("")+
     `</select>`;
+}
+
+function ownerSelect(value){
+  return `<select class="movesel galowner" aria-label="Comité propriétaire">`+
+    `<option value="" ${!value?"selected":""}>— aucun —</option>`+
+    gallery.owners.map(o=>`<option value="${o.key}" ${o.key===value?"selected":""}>${o.emoji} ${esc(o.name)}</option>`).join("")+
+    `</select>`;
+}
+
+// --- Codes d'accès des comités ----------------------------------------------
+function renderCodes(){
+  const box=document.getElementById("codes");
+  const byOwner=Object.fromEntries(gallery.codes.map(c=>[c.owner,c]));
+  box.innerHTML = gallery.owners.map(o=>{
+    const c=byOwner[o.key]||{set:false};
+    const état = c.set
+      ? `<span class="pill" style="background:var(--green);color:#fff">code actif</span>`
+      : `<span class="pill" style="background:#e7d9bd;color:var(--ink)">aucun code</span>`;
+    return `<div class="card galcode" data-owner="${o.key}" style="margin-bottom:10px;border-left:10px solid ${o.color};display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <strong style="flex:1 1 200px">${o.emoji} ${esc(o.name)}</strong>
+      ${état}
+      <span class="codeshow muted" style="font-family:monospace;font-size:16px;letter-spacing:2px"></span>
+      <button class="btn btn-ink codegen">${c.set?"↻ Régénérer":"＋ Générer"} le code</button>
+      ${c.set?'<button class="btn btn-ghost coderevoke" style="color:var(--red)">Révoquer</button>':""}
+    </div>`;
+  }).join("");
+}
+
+document.getElementById("codes").addEventListener("click", async (e)=>{
+  const card=e.target.closest(".galcode"); if(!card) return;
+  const owner=card.dataset.owner;
+  if(e.target.closest(".codegen")){
+    const r=await fetch("/api/admin/gallery/code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({owner})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) return alert(d.error||"Échec.");
+    setOwnerCode(owner, true);
+    // Affiche le code (une seule fois) et bascule la carte en « code actif » sans tout re-rendre.
+    const show=card.querySelector(".codeshow");
+    show.innerHTML=`→ <strong>${esc(d.code)}</strong> <button class="btn btn-ghost codecopy" type="button" style="padding:4px 8px;font-size:12px">copier</button>`;
+    show.querySelector(".codecopy").addEventListener("click",()=>{ navigator.clipboard?.writeText(d.code); });
+    const pill=card.querySelector(".pill"); pill.textContent="code actif"; pill.style.background="var(--green)"; pill.style.color="#fff";
+    card.querySelector(".codegen").textContent="↻ Régénérer le code";
+    if(!card.querySelector(".coderevoke")){
+      const rev=document.createElement("button");
+      rev.className="btn btn-ghost coderevoke"; rev.style.color="var(--red)"; rev.textContent="Révoquer";
+      card.appendChild(rev);
+    }
+  }
+  if(e.target.closest(".coderevoke")){
+    if(!confirm("Révoquer le code de ce comité ? Il ne pourra plus se connecter jusqu'à régénération.")) return;
+    const r=await fetch(`/api/admin/gallery/code/${owner}`,{method:"DELETE"});
+    if(!r.ok) return alert("Échec.");
+    setOwnerCode(owner, false);
+    renderCodes();
+  }
+});
+
+function setOwnerCode(owner, on){
+  const c=gallery.codes.find(x=>x.owner===owner);
+  if(c) c.set=on; else gallery.codes.push({owner, set:on});
 }
 
 function renderGallery(){
@@ -305,7 +372,8 @@ function renderGallery(){
         <div style="flex:1 1 200px"><label class="fld">Titre</label>
           <input type="text" class="galtitle" value="${esc(a.title)}"></div>
         <div style="flex:0 0 130px"><label class="fld">Couleur</label>${colorSelect(a.color)}</div>
-        <div style="flex:2 1 260px"><label class="fld">Lien Drive de l'album</label>
+        <div style="flex:1 1 180px"><label class="fld">Comité propriétaire</label>${ownerSelect(a.owner)}</div>
+        <div style="flex:2 1 240px"><label class="fld">Lien Drive de l'album</label>
           <input type="text" class="galdrive" value="${esc(a.drive_url)}" placeholder="https://drive.google.com/…"></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center">
@@ -346,34 +414,35 @@ async function saveAlbum(btn){
   const el=galAlbumEl(btn), id=Number(el.dataset.id);
   const title=el.querySelector(".galtitle").value;
   const color=el.querySelector(".galcolor").value;
+  const owner=el.querySelector(".galowner").value;
   const drive_url=el.querySelector(".galdrive").value;
   galStatus(btn,"Enregistrement…");
-  const r=await fetch(`/api/admin/gallery/album/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,color,drive_url})});
+  const r=await fetch(`/api/gallery/album/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,color,owner,drive_url})});
   if(r.ok){ el.style.borderLeftColor=color; galStatus(btn,"✓ enregistré"); setTimeout(()=>galStatus(btn,""),1500); }
   else { const d=await r.json().catch(()=>({})); galStatus(btn,"⚠ "+(d.error||"échec")); }
 }
 
 async function addAlbum(){
-  const r=await fetch("/api/admin/gallery/album",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Nouvel album",color:"#e85d1b",drive_url:""})});
+  const r=await fetch("/api/gallery/album",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Nouvel album",color:"#e85d1b",owner:"",drive_url:""})});
   if(r.ok) await loadGallery();
 }
 
 async function deleteAlbumUI(btn){
   const id=Number(galAlbumEl(btn).dataset.id);
   if(!confirm("Supprimer cet album et toutes ses photos ? Cette action est définitive.")) return;
-  const r=await fetch(`/api/admin/gallery/album/${id}`,{method:"DELETE"});
+  const r=await fetch(`/api/gallery/album/${id}`,{method:"DELETE"});
   if(r.ok) await loadGallery();
 }
 
 async function deletePhotoUI(btn){
   const thumb=btn.closest(".galthumb"); const id=Number(thumb.dataset.id);
-  const r=await fetch(`/api/admin/gallery/photo/${id}`,{method:"DELETE"});
+  const r=await fetch(`/api/gallery/photo/${id}`,{method:"DELETE"});
   if(r.ok) thumb.remove();
 }
 
 async function saveCaption(input){
   const id=Number(input.closest(".galthumb").dataset.id);
-  await fetch(`/api/admin/gallery/photo/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:input.value})});
+  await fetch(`/api/gallery/photo/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({caption:input.value})});
 }
 
 async function uploadFiles(input){
@@ -384,7 +453,7 @@ async function uploadFiles(input){
     galStatus(input, `Envoi ${++done}/${files.length}…`);
     try{
       const dataUrl=await resizeImage(file, 1600, 0.82);
-      const r=await fetch("/api/admin/gallery/photo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({album_id:id, dataUrl, caption:""})});
+      const r=await fetch("/api/gallery/photo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({album_id:id, dataUrl, caption:""})});
       if(!r.ok){ const d=await r.json().catch(()=>({})); galStatus(input,"⚠ "+(d.error||"échec")); }
     }catch(err){ galStatus(input,"⚠ "+file.name+" ignoré"); }
   }

@@ -3,14 +3,15 @@
 import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyCookie from "@fastify/cookie";
-import { timingSafeEqual, randomBytes } from "node:crypto";
+import { timingSafeEqual, randomBytes, scryptSync } from "node:crypto";
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   insertResponse, listResponses, assignCommittee,
-  seedGalleryIfEmpty, listGallery, albumExists, createAlbum, updateAlbum,
-  deleteAlbum, addPhoto, deletePhoto, updatePhotoCaption, getSetting, setSetting,
+  seedGalleryIfEmpty, listGallery, getAlbumMeta, getPhotoMeta,
+  createAlbum, updateAlbum, deleteAlbum, addPhoto, deletePhoto, updatePhotoCaption,
+  getSetting, setSetting, getGalleryCode, setGalleryCode, listGalleryCodes,
 } from "./db.js";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -33,14 +34,21 @@ export const COMMITTEES = [
 ];
 const FLOORS = ["Étage (filles)", "Rez-de-chaussée (garçons)"];
 const ENGLISH_LEVELS = ["Débutant", "Intermédiaire", "Avancé"];
-// Albums de galerie créés au premier démarrage (Club d'anglais + un par comité, couleurs de charte).
-const GALLERY_DEFAULTS = [
-  { title: "Club d'anglais",       color: "#f2a900" },
-  { title: "Sorties & Excursions", color: "#0e8c7a" },
-  { title: "Soirées & Jeux",       color: "#8a2d5d" },
-  { title: "Sport & Bien-être",    color: "#1c7a45" },
-  { title: "Culture & Échanges",   color: "#e85d1b" },
+// Propriétaires de galerie : 4 comités + Club d'anglais. Chacun a une clé stable (slug),
+// un code d'accès propre, et gère uniquement SES albums. Source de vérité côté serveur.
+const GALLERY_OWNERS = [
+  { key: "club",    name: "Club d'anglais",       color: "#f2a900", emoji: "📣" },
+  { key: "sorties", name: "Sorties & Excursions", color: "#0e8c7a", emoji: "🌳" },
+  { key: "soirees", name: "Soirées & Jeux",       color: "#8a2d5d", emoji: "🎉" },
+  { key: "sport",   name: "Sport & Bien-être",    color: "#1c7a45", emoji: "⚽" },
+  { key: "culture", name: "Culture & Échanges",   color: "#e85d1b", emoji: "🎭" },
 ];
+const OWNER_KEYS = new Set(GALLERY_OWNERS.map((o) => o.key));
+const ownerInfo = (key) => GALLERY_OWNERS.find((o) => o.key === key) || null;
+const ownerName = (key) => ownerInfo(key)?.name || "";
+
+// Albums de galerie créés au premier démarrage (un par propriétaire, couleurs de charte).
+const GALLERY_DEFAULTS = GALLERY_OWNERS.map((o) => ({ title: o.name, color: o.color, owner: o.key }));
 seedGalleryIfEmpty(GALLERY_DEFAULTS);
 
 // --- Galerie : helpers ------------------------------------------------------
@@ -64,6 +72,27 @@ function removeImage(filename) {
   try { if (existsSync(p)) unlinkSync(p); } catch { /* déjà absent */ }
 }
 
+// --- Codes d'accès des comités : hachage scrypt (pur Node, sans dépendance) -
+function hashCode(code) {
+  const salt = randomBytes(16);
+  return salt.toString("hex") + ":" + scryptSync(String(code), salt, 32).toString("hex");
+}
+function verifyCode(code, stored) {
+  if (!stored || typeof stored !== "string" || !stored.includes(":")) return false;
+  const [saltHex, hashHex] = stored.split(":");
+  const expected = Buffer.from(hashHex, "hex");
+  const actual = scryptSync(String(code), Buffer.from(saltHex, "hex"), expected.length);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+// Code lisible à partager (8 caractères sans ambiguïté 0/O/1/I).
+function genCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(8);
+  let out = "";
+  for (let i = 0; i < 8; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out;
+}
+
 const app = Fastify({ logger: true, trustProxy: true });
 await app.register(fastifyCookie, { secret: COOKIE_SECRET });
 await app.register(fastifyStatic, { root: join(ROOT, "public"), prefix: "/" });
@@ -72,6 +101,7 @@ await app.register(fastifyStatic, { root: join(ROOT, "public"), prefix: "/" });
 app.get("/", (req, reply) => reply.sendFile("index.html"));
 app.get("/survey", (req, reply) => reply.sendFile("survey.html"));
 app.get("/admin", (req, reply) => reply.sendFile("admin.html"));
+app.get("/comite", (req, reply) => reply.sendFile("comite.html"));
 // Évite le 404 systématique du navigateur (pas d'icône servie pour l'instant)
 app.get("/favicon.ico", (req, reply) => reply.code(204).send());
 
@@ -131,23 +161,44 @@ app.get("/api/gallery", async () => ({
   ok: true,
   albums: listGallery().map((a) => ({
     id: a.id, title: a.title, color: a.color, drive_url: a.drive_url || "",
+    owner: a.owner || "", ownerName: ownerName(a.owner),
     photos: a.photos.map((p) => ({ src: "images/" + p.filename, cap: p.caption || "" })),
   })),
   drive_all: getSetting("drive_all") || "",
 }));
 
-// --- Auth admin (mot de passe unique → cookie signé) -----------------------
-function isAuthed(req) {
+// --- Auth : deux rôles via cookie signé ------------------------------------
+// Valeur du cookie : "ok" = super-admin (toi) ; "owner:<clé>" = un comité scopé à sa galerie.
+function readSession(req) {
   const raw = req.cookies?.[COOKIE_NAME];
-  if (!raw) return false;
+  if (!raw) return null;
   const un = req.unsignCookie(raw);
-  return un.valid && un.value === "ok";
+  if (!un.valid || !un.value) return null;
+  if (un.value === "ok") return { role: "super" };
+  if (un.value.startsWith("owner:")) {
+    const owner = un.value.slice(6);
+    if (OWNER_KEYS.has(owner)) return { role: "owner", owner };
+  }
+  return null;
 }
+const isAuthed = (req) => readSession(req)?.role === "super";
 
+// Réservé au super-admin (répartition, réponses, codes, réglages globaux).
 function requireAdmin(req, reply, done) {
   if (!isAuthed(req)) return reply.code(401).send({ ok: false, error: "Non authentifié." });
   done();
 }
+// Super-admin OU comité connecté ; expose la session sur req.gal pour le contrôle de périmètre.
+function requireGallery(req, reply, done) {
+  const s = readSession(req);
+  if (!s) return reply.code(401).send({ ok: false, error: "Non authentifié." });
+  req.gal = s;
+  done();
+}
+// Un comité ne peut toucher qu'à ses propres albums ; le super-admin n'est jamais bloqué.
+const outOfScope = (s, owner) => s.role === "owner" && owner !== s.owner;
+
+const SESSION_COOKIE = { path: "/", httpOnly: true, sameSite: "strict", secure: PROD, maxAge: 60 * 60 * 8 };
 
 app.post("/api/admin/login", async (req, reply) => {
   const pwd = String(req.body?.password || "");
@@ -155,18 +206,32 @@ app.post("/api/admin/login", async (req, reply) => {
   const b = Buffer.from(ADMIN_PASSWORD);
   const ok = a.length === b.length && timingSafeEqual(a, b);
   if (!ok) return reply.code(401).send({ ok: false, error: "Mot de passe incorrect." });
-  reply.setCookie(COOKIE_NAME, reply.signCookie("ok"), {
-    path: "/", httpOnly: true, sameSite: "strict", secure: PROD, maxAge: 60 * 60 * 8,
-  });
+  reply.setCookie(COOKIE_NAME, reply.signCookie("ok"), SESSION_COOKIE);
   return { ok: true };
 });
 
-app.post("/api/admin/logout", async (req, reply) => {
-  reply.clearCookie(COOKIE_NAME, { path: "/" });
-  return { ok: true };
+// Connexion d'un comité avec son code partagé (généré par le super-admin).
+app.post("/api/comite/login", async (req, reply) => {
+  const owner = String(req.body?.owner || "");
+  const code = String(req.body?.code || "");
+  if (!OWNER_KEYS.has(owner)) return reply.code(400).send({ ok: false, error: "Comité invalide." });
+  const stored = getGalleryCode(owner);
+  if (!stored) return reply.code(401).send({ ok: false, error: "Aucun code défini pour ce comité — demande-le à l'admin." });
+  if (!verifyCode(code, stored)) return reply.code(401).send({ ok: false, error: "Code incorrect." });
+  reply.setCookie(COOKIE_NAME, reply.signCookie("owner:" + owner), SESSION_COOKIE);
+  return { ok: true, owner };
 });
+
+app.post("/api/admin/logout", async (req, reply) => { reply.clearCookie(COOKIE_NAME, { path: "/" }); return { ok: true }; });
+app.post("/api/comite/logout", async (req, reply) => { reply.clearCookie(COOKIE_NAME, { path: "/" }); return { ok: true }; });
 
 app.get("/api/admin/me", async (req) => ({ authed: isAuthed(req) }));
+// Session courante (utilisée par /comite) : { role:null } | { role:"super" } | { role:"owner", owner:{…} }
+app.get("/api/session", async (req) => {
+  const s = readSession(req);
+  if (!s) return { role: null };
+  return s.role === "super" ? { role: "super" } : { role: "owner", owner: ownerInfo(s.owner) };
+});
 
 app.get("/api/admin/responses", { preHandler: requireAdmin }, async () => ({
   ok: true,
@@ -186,45 +251,71 @@ app.post("/api/admin/assign", { preHandler: requireAdmin }, async (req, reply) =
   return { ok: true };
 });
 
-// --- Galerie : API admin (gestion albums + photos + lien global) -----------
-app.get("/api/admin/gallery", { preHandler: requireAdmin }, async () => ({
-  ok: true,
-  albums: listGallery().map((a) => ({
+// --- Galerie : gestion (super-admin OU comité, scopée par propriétaire) -----
+// Le super-admin voit/édite tout ; un comité ne voit/édite QUE ses albums.
+app.get("/api/gallery/manage", { preHandler: requireGallery }, async (req) => {
+  const s = req.gal;
+  const all = listGallery();
+  const mine = s.role === "super" ? all : all.filter((a) => a.owner === s.owner);
+  const albums = mine.map((a) => ({
     id: a.id, title: a.title, color: a.color, drive_url: a.drive_url || "",
+    owner: a.owner || "", ownerName: ownerName(a.owner),
     photos: a.photos.map((p) => ({ id: p.id, src: "images/" + p.filename, cap: p.caption || "" })),
-  })),
-  drive_all: getSetting("drive_all") || "",
-}));
+  }));
+  const out = { ok: true, role: s.role, owners: GALLERY_OWNERS, albums };
+  if (s.role === "super") {
+    const byOwner = Object.fromEntries(listGalleryCodes().map((c) => [c.owner, c]));
+    out.drive_all = getSetting("drive_all") || "";
+    out.codes = GALLERY_OWNERS.map((o) => ({
+      owner: o.key, set: !!byOwner[o.key]?.set, updated_at: byOwner[o.key]?.updated_at || null,
+    }));
+  } else {
+    out.owner = ownerInfo(s.owner);
+  }
+  return out;
+});
 
-app.post("/api/admin/gallery/album", { preHandler: requireAdmin }, async (req, reply) => {
+app.post("/api/gallery/album", { preHandler: requireGallery }, async (req, reply) => {
+  const s = req.gal;
   const title = String(req.body?.title || "").trim().slice(0, 80);
   if (title.length < 2) return reply.code(400).send({ ok: false, error: "Titre requis." });
-  const id = createAlbum({ title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url) });
+  const reqOwner = String(req.body?.owner || "");
+  const owner = s.role === "owner" ? s.owner : (OWNER_KEYS.has(reqOwner) ? reqOwner : null);
+  const id = createAlbum({ title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url), owner });
   return reply.code(201).send({ ok: true, id });
 });
 
-app.patch("/api/admin/gallery/album/:id", { preHandler: requireAdmin }, async (req, reply) => {
-  const id = Number(req.params.id);
-  const title = String(req.body?.title || "").trim().slice(0, 80);
+app.patch("/api/gallery/album/:id", { preHandler: requireGallery }, async (req, reply) => {
+  const s = req.gal, id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  const meta = getAlbumMeta(id);
+  if (!meta) return reply.code(404).send({ ok: false, error: "Album introuvable." });
+  if (outOfScope(s, meta.owner)) return reply.code(403).send({ ok: false, error: "Hors de votre périmètre." });
+  const title = String(req.body?.title || "").trim().slice(0, 80);
   if (title.length < 2) return reply.code(400).send({ ok: false, error: "Titre requis." });
-  if (!albumExists(id)) return reply.code(404).send({ ok: false, error: "Album introuvable." });
-  updateAlbum(id, { title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url) });
+  // Un comité ne peut pas changer le propriétaire ; le super-admin oui.
+  const reqOwner = String(req.body?.owner || "");
+  const owner = s.role === "owner" ? meta.owner : (OWNER_KEYS.has(reqOwner) ? reqOwner : null);
+  updateAlbum(id, { title, color: cleanColor(req.body?.color), drive_url: cleanUrl(req.body?.drive_url), owner });
   return { ok: true };
 });
 
-app.delete("/api/admin/gallery/album/:id", { preHandler: requireAdmin }, async (req, reply) => {
-  const id = Number(req.params.id);
+app.delete("/api/gallery/album/:id", { preHandler: requireGallery }, async (req, reply) => {
+  const s = req.gal, id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
-  if (!albumExists(id)) return reply.code(404).send({ ok: false, error: "Album introuvable." });
+  const meta = getAlbumMeta(id);
+  if (!meta) return reply.code(404).send({ ok: false, error: "Album introuvable." });
+  if (outOfScope(s, meta.owner)) return reply.code(403).send({ ok: false, error: "Hors de votre périmètre." });
   for (const f of deleteAlbum(id)) removeImage(f);
   return { ok: true };
 });
 
-// Upload : l'admin envoie l'image redimensionnée (canvas) en data-URL base64.
-app.post("/api/admin/gallery/photo", { preHandler: requireAdmin, bodyLimit: 12 * 1024 * 1024 }, async (req, reply) => {
-  const album_id = Number(req.body?.album_id);
-  if (!albumExists(album_id)) return reply.code(400).send({ ok: false, error: "Album invalide." });
+// Upload : le client envoie l'image redimensionnée (canvas) en data-URL base64.
+app.post("/api/gallery/photo", { preHandler: requireGallery, bodyLimit: 12 * 1024 * 1024 }, async (req, reply) => {
+  const s = req.gal, album_id = Number(req.body?.album_id);
+  const meta = getAlbumMeta(album_id);
+  if (!meta) return reply.code(400).send({ ok: false, error: "Album invalide." });
+  if (outOfScope(s, meta.owner)) return reply.code(403).send({ ok: false, error: "Hors de votre périmètre." });
   const parsed = parseDataUrl(req.body?.dataUrl);
   if (!parsed) return reply.code(400).send({ ok: false, error: "Image invalide (JPEG/PNG/WebP attendu)." });
   if (parsed.buf.length > 6 * 1024 * 1024) return reply.code(413).send({ ok: false, error: "Image trop lourde (max 6 Mo)." });
@@ -234,23 +325,47 @@ app.post("/api/admin/gallery/photo", { preHandler: requireAdmin, bodyLimit: 12 *
   return reply.code(201).send({ ok: true, id, src: "images/" + filename });
 });
 
-app.patch("/api/admin/gallery/photo/:id", { preHandler: requireAdmin }, async (req, reply) => {
-  const id = Number(req.params.id);
+app.patch("/api/gallery/photo/:id", { preHandler: requireGallery }, async (req, reply) => {
+  const s = req.gal, id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  const meta = getPhotoMeta(id);
+  if (!meta) return reply.code(404).send({ ok: false, error: "Photo introuvable." });
+  if (outOfScope(s, meta.owner)) return reply.code(403).send({ ok: false, error: "Hors de votre périmètre." });
   updatePhotoCaption(id, req.body?.caption);
   return { ok: true };
 });
 
-app.delete("/api/admin/gallery/photo/:id", { preHandler: requireAdmin }, async (req, reply) => {
-  const id = Number(req.params.id);
+app.delete("/api/gallery/photo/:id", { preHandler: requireGallery }, async (req, reply) => {
+  const s = req.gal, id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return reply.code(400).send({ ok: false, error: "id invalide." });
+  const meta = getPhotoMeta(id);
+  if (!meta) return reply.code(404).send({ ok: false, error: "Photo introuvable." });
+  if (outOfScope(s, meta.owner)) return reply.code(403).send({ ok: false, error: "Hors de votre périmètre." });
   const filename = deletePhoto(id);
   if (filename) removeImage(filename);
   return { ok: true };
 });
 
+// --- Réglages & codes : super-admin uniquement ------------------------------
 app.post("/api/admin/gallery/settings", { preHandler: requireAdmin }, async (req) => {
   setSetting("drive_all", cleanUrl(req.body?.drive_all));
+  return { ok: true };
+});
+
+// (Re)génère le code d'accès d'un comité — renvoyé EN CLAIR une seule fois.
+app.post("/api/admin/gallery/code", { preHandler: requireAdmin }, async (req, reply) => {
+  const owner = String(req.body?.owner || "");
+  if (!OWNER_KEYS.has(owner)) return reply.code(400).send({ ok: false, error: "Comité invalide." });
+  const code = genCode();
+  setGalleryCode(owner, hashCode(code));
+  return { ok: true, owner, code };
+});
+
+// Révoque le code d'un comité (accès fermé jusqu'à régénération).
+app.delete("/api/admin/gallery/code/:owner", { preHandler: requireAdmin }, async (req, reply) => {
+  const owner = String(req.params.owner || "");
+  if (!OWNER_KEYS.has(owner)) return reply.code(400).send({ ok: false, error: "Comité invalide." });
+  setGalleryCode(owner, null);
   return { ok: true };
 });
 
