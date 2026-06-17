@@ -63,15 +63,35 @@ db.exec(`
     key   TEXT PRIMARY KEY,
     value TEXT
   );
+  -- Codes d'accès des galeries de comité (un par "propriétaire" : 4 comités + Club d'anglais).
+  -- code_hash = "<salt hex>:<scrypt hex>" (haché côté serveur) ; NULL = pas de code (accès fermé).
+  CREATE TABLE IF NOT EXISTS gallery_codes (
+    owner      TEXT PRIMARY KEY,
+    code_hash  TEXT,
+    updated_at TEXT
+  );
 `);
+
+// Migration légère : rattache chaque album à un "propriétaire" (comité ou Club d'anglais).
+const galCols = db.prepare("PRAGMA table_info(gallery_albums)").all().map((c) => c.name);
+if (!galCols.includes("owner")) {
+  db.exec("ALTER TABLE gallery_albums ADD COLUMN owner TEXT");
+  // Rattache les albums déjà semés (bases existantes) à leur propriétaire, par titre.
+  const seedMap = {
+    "Club d'anglais": "club", "Sorties & Excursions": "sorties", "Soirées & Jeux": "soirees",
+    "Sport & Bien-être": "sport", "Culture & Échanges": "culture",
+  };
+  const back = db.prepare("UPDATE gallery_albums SET owner = ? WHERE title = ? AND owner IS NULL");
+  for (const [title, key] of Object.entries(seedMap)) back.run(key, title);
+}
 
 const gq = {
   albums:        db.prepare("SELECT * FROM gallery_albums ORDER BY sort_order, id"),
   photosOf:      db.prepare("SELECT * FROM gallery_photos WHERE album_id = ? ORDER BY sort_order, id"),
   countAlbums:   db.prepare("SELECT COUNT(*) AS n FROM gallery_albums"),
   maxOrder:      db.prepare("SELECT COALESCE(MAX(sort_order),-1) AS m FROM gallery_albums"),
-  insAlbum:      db.prepare("INSERT INTO gallery_albums (title,color,drive_url,sort_order,created_at) VALUES (@title,@color,@drive_url,@sort_order,@created_at)"),
-  updAlbum:      db.prepare("UPDATE gallery_albums SET title=@title, color=@color, drive_url=@drive_url WHERE id=@id"),
+  insAlbum:      db.prepare("INSERT INTO gallery_albums (title,color,drive_url,owner,sort_order,created_at) VALUES (@title,@color,@drive_url,@owner,@sort_order,@created_at)"),
+  updAlbum:      db.prepare("UPDATE gallery_albums SET title=@title, color=@color, drive_url=@drive_url, owner=@owner WHERE id=@id"),
   getAlbum:      db.prepare("SELECT * FROM gallery_albums WHERE id = ?"),
   delAlbum:      db.prepare("DELETE FROM gallery_albums WHERE id = ?"),
   photoFiles:    db.prepare("SELECT filename FROM gallery_photos WHERE album_id = ?"),
@@ -83,12 +103,13 @@ const gq = {
   updCaption:    db.prepare("UPDATE gallery_photos SET caption = @caption WHERE id = @id"),
 };
 
-// Crée les albums par défaut (un par comité) si la galerie est vide.
+// Crée les albums par défaut (un par comité + Club d'anglais) si la galerie est vide.
 export function seedGalleryIfEmpty(defaults) {
   if (gq.countAlbums.get().n > 0) return;
   const now = new Date().toISOString();
   defaults.forEach((d, i) => gq.insAlbum.run({
-    title: d.title, color: d.color || "#e85d1b", drive_url: null, sort_order: i, created_at: now,
+    title: d.title, color: d.color || "#e85d1b", drive_url: null,
+    owner: d.owner || null, sort_order: i, created_at: now,
   }));
 }
 
@@ -100,21 +121,37 @@ export function albumExists(id) {
   return !!gq.getAlbum.get(Number(id));
 }
 
-export function createAlbum({ title, color, drive_url }) {
+// Métadonnées d'un album (pour le contrôle de périmètre côté serveur).
+export function getAlbumMeta(id) {
+  const a = gq.getAlbum.get(Number(id));
+  return a ? { id: a.id, owner: a.owner || null } : null;
+}
+
+// Propriétaire de l'album contenant une photo (ou null si la photo n'existe pas).
+export function getPhotoMeta(id) {
+  const p = gq.getPhoto.get(Number(id));
+  if (!p) return null;
+  const a = gq.getAlbum.get(p.album_id);
+  return { id: p.id, album_id: p.album_id, owner: a ? a.owner || null : null };
+}
+
+export function createAlbum({ title, color, drive_url, owner }) {
   const info = gq.insAlbum.run({
     title: String(title).trim(),
     color: color || "#e85d1b",
     drive_url: drive_url ? String(drive_url) : null,
+    owner: owner ? String(owner) : null,
     sort_order: gq.maxOrder.get().m + 1,
     created_at: new Date().toISOString(),
   });
   return Number(info.lastInsertRowid);
 }
 
-export function updateAlbum(id, { title, color, drive_url }) {
+export function updateAlbum(id, { title, color, drive_url, owner }) {
   return gq.updAlbum.run({
     id: Number(id), title: String(title).trim(), color: color || "#e85d1b",
     drive_url: drive_url ? String(drive_url) : null,
+    owner: owner ? String(owner) : null,
   }).changes > 0;
 }
 
@@ -158,6 +195,25 @@ export function getSetting(key) {
 }
 export function setSetting(key, value) {
   setSettingStmt.run(String(key), value == null ? null : String(value));
+}
+
+// --- Codes d'accès des galeries (hash géré côté serveur) --------------------
+const codeGetStmt  = db.prepare("SELECT code_hash FROM gallery_codes WHERE owner = ?");
+const codeSetStmt  = db.prepare("INSERT INTO gallery_codes (owner,code_hash,updated_at) VALUES (?,?,?) ON CONFLICT(owner) DO UPDATE SET code_hash = excluded.code_hash, updated_at = excluded.updated_at");
+const codeListStmt = db.prepare("SELECT owner, code_hash, updated_at FROM gallery_codes");
+
+export function getGalleryCode(owner) {
+  const r = codeGetStmt.get(String(owner));
+  return r ? r.code_hash : null;
+}
+export function setGalleryCode(owner, hash) {
+  codeSetStmt.run(String(owner), hash == null ? null : String(hash), new Date().toISOString());
+}
+// État des codes (sans révéler le hash) : { owner, set, updated_at }.
+export function listGalleryCodes() {
+  return codeListStmt.all().map((r) => ({
+    owner: r.owner, set: r.code_hash != null, updated_at: r.updated_at,
+  }));
 }
 
 const insertStmt = db.prepare(`
