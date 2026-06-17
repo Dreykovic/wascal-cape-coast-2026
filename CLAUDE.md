@@ -32,12 +32,13 @@ signé. Base **SQLite** via le module intégré `node:sqlite` (**Node ≥ 22.5**
 
 | Chemin | Rôle |
 |---|---|
-| `files/server.js` | Serveur Fastify : pages, API publique (`POST /api/responses`, `GET /api/gallery`), API admin (`/api/admin/*`) |
-| `files/db.js` | `node:sqlite` — tables `responses`, `gallery_albums`, `gallery_photos`, `settings` ; migrations légères ; helpers réponses + galerie |
+| `files/server.js` | Serveur Fastify : pages, API publique (`POST /api/responses`, `GET /api/gallery`), API galerie scopée (`/api/gallery/*`), API admin (`/api/admin/*`), login comité (`/api/comite/*`) |
+| `files/db.js` | `node:sqlite` — tables `responses`, `gallery_albums` (avec `owner`), `gallery_photos`, `settings`, `gallery_codes` ; migrations légères ; helpers réponses + galerie + codes |
 | `files/public/index.html` | Site informatif en **deck de slides** (hero, région, objectifs, club, activités, délégations, Ubuntu, galerie, calendrier, festival) — **public**. Page **autonome** (CSS+JS inline, n'utilise PAS `app.css`/`shared.js`), nav clavier/tactile/molette. La **galerie** lit `GET /api/gallery` (albums + lightbox). Liens vers `/survey`. |
 | `files/public/survey.html` | Sondage 4 étapes → `POST /api/responses` — **public** |
-| `files/public/admin.html` | Répartition 4 comités, rotation 4 mois, idées proposées, **gestion de la galerie** (albums, upload photos, liens Drive), export CSV — **protégé par mot de passe** |
-| `files/public/images/` | Photos de galerie **téléversées via l'admin** (servies en statique ; nommées `g<album>-<hex>.jpg`). Gérées en base, ne pas y toucher à la main. |
+| `files/public/admin.html` | **Super-admin** : répartition 4 comités, rotation 4 mois, idées proposées, **toutes** les galeries (+ propriétaire de chaque album), **codes d'accès des comités**, lien Drive global, export CSV — **protégé par `ADMIN_PASSWORD`** |
+| `files/public/comite.html` | Page **`/comite`** : un comité (ou le Club d'anglais) gère **uniquement sa propre galerie** (albums, upload photos, légendes, lien Drive) après connexion par **code partagé** — **public mais scopé par code** |
+| `files/public/images/` | Photos de galerie **téléversées via l'admin ou `/comite`** (servies en statique ; nommées `g<album>-<hex>.jpg`). Gérées en base, ne pas y toucher à la main. |
 | `files/public/app.css` | Charte partagée (tokens `:root`, kente, stickers, formulaires) |
 | `files/public/shared.js` | Données + utilitaires partagés (module ES) |
 | `files/README.md` | Lancement local + déploiement VPS — **source de vérité du déploiement** |
@@ -86,22 +87,37 @@ déplacées, pour voir leur comité d'origine. Plus de seed / « Relancer » (l'
 La **rotation sur 4 mois** reste affichée : chaque comité garde ses membres et tourne sur les 4 rôles via
 `(g+m)%4`.
 
-### La galerie administrable (`admin.html` + `index.html`)
+### La galerie décentralisée par comité (`admin.html` + `comite.html` + `index.html`)
 
 La galerie de la page d'accueil est **pilotée par la base**, pas en dur. Tables `gallery_albums`
-(`title`, `color`, `drive_url`, `sort_order`) et `gallery_photos` (`album_id`, `filename`, `caption`,
-`sort_order`) ; le lien Drive global vit dans `settings` (clé `drive_all`). Au **premier démarrage**,
-`seedGalleryIfEmpty` crée 5 albums (Club d'anglais + un par comité). Le **nombre d'albums est libre**
-(grille `auto-fit`) : l'admin peut en ajouter/retirer librement.
+(`title`, `color`, `drive_url`, **`owner`**, `sort_order`) et `gallery_photos` (`album_id`, `filename`,
+`caption`, `sort_order`) ; le lien Drive global vit dans `settings` (clé `drive_all`). Au **premier
+démarrage**, `seedGalleryIfEmpty` crée 5 albums, un par **propriétaire**. Le **nombre d'albums est libre**.
 
-- **Public** : `GET /api/gallery` → albums + photos (`src` = `images/<fichier>`) + `drive_all`. `index.html`
-  rend une **étagère d'albums** (couverture placeholder kente tant qu'il n'y a pas de photo) + **lightbox**
-  plein écran (garde `window.__lbOpen` pour ne pas déclencher la nav des slides).
-- **Admin** (gardé par `requireAdmin`) : `POST/PATCH/DELETE /api/admin/gallery/album`,
-  `POST/PATCH/DELETE /api/admin/gallery/photo`, `POST /api/admin/gallery/settings`.
-- **Upload sans dépendance** : l'admin **redimensionne la photo côté navigateur** (canvas → JPEG ~1600 px)
-  et l'envoie en **data-URL base64** ; le serveur la décode et l'écrit dans `public/images/` (route à
-  `bodyLimit` relevé). Supprimer une photo/un album efface aussi le(s) fichier(s) sur le disque.
+**Chaque comité gère sa propre galerie** (choix produit, juin 2026). Il y a **5 propriétaires de galerie**
+(`GALLERY_OWNERS`, clés stables alignées entre `server.js` et `shared.js`) : `club` (Club d'anglais) +
+les 4 comités (`sorties`, `soirees`, `sport`, `culture`). Chaque album porte une colonne `owner` = la clé
+de son propriétaire (ou `null` = non rattaché, géré par le super-admin seulement).
+
+**Deux rôles, un seul cookie signé** (`COOKIE_NAME`) :
+- **super-admin** (`ADMIN_PASSWORD` → cookie valeur `"ok"`) : voit/édite **tout**, change le `owner` d'un
+  album, gère le lien Drive global, **génère les codes** des comités. Routes `/api/admin/*` (`requireAdmin`).
+- **comité** (cookie valeur `"owner:<clé>"`, posé par `POST /api/comite/login {owner, code}`) : ne voit/édite
+  **que ses albums**. Le code partagé est **haché en base** (`gallery_codes`, scrypt via `node:crypto`,
+  zéro dépendance) ; il est généré par le super-admin et **affiché en clair une seule fois**.
+
+- **Public** : `GET /api/gallery` → albums (+ `owner`/`ownerName`) + photos (`src` = `images/<fichier>`) +
+  `drive_all`. `index.html` rend une **étagère d'albums** + **lightbox** (garde `window.__lbOpen`).
+- **Gestion scopée** (gardée par `requireGallery` = super OU comité) : `GET /api/gallery/manage`,
+  `POST/PATCH/DELETE /api/gallery/album`, `POST/PATCH/DELETE /api/gallery/photo`. Le **contrôle de périmètre
+  est côté serveur** (`outOfScope`) : un comité reçoit `403` s'il vise un album dont `owner` ≠ le sien, et
+  le `owner` est **forcé** à son comité quand il crée un album. Super-only : `POST /api/admin/gallery/settings`
+  (Drive global), `POST /api/admin/gallery/code` + `DELETE /api/admin/gallery/code/:owner` (codes).
+- **Upload sans dépendance** : la photo est **redimensionnée côté navigateur** (canvas → JPEG ~1600 px) et
+  envoyée en **data-URL base64** ; le serveur la décode et l'écrit dans `public/images/` (route à `bodyLimit`
+  relevé). Supprimer une photo/un album efface aussi le(s) fichier(s) sur le disque.
+- **Migration** : ajout de la colonne `owner` = `ALTER TABLE` idempotent en tête de `db.js` qui **rattache les
+  albums déjà semés à leur propriétaire par titre** (bases existantes en prod préservées).
 
 ## Identité visuelle (charte partagée)
 
