@@ -7,9 +7,10 @@ dépendance native à compiler). Trois pages servies par le même process :
 |---|---|---|
 | `/` | Site informatif (programme, calendrier 16 semaines, soirées-pays) | public |
 | `/survey` | Sondage en 4 étapes → table `responses` | public |
-| `/admin` | Répartition en 4 comités équilibrés, rotation 4 mois, export CSV | **mot de passe** |
+| `/comite` | Galerie d'**un seul comité** (albums, photos, lien Drive) | **code partagé par comité** |
+| `/admin` | Répartition 4 comités, rotation 4 mois, **toutes** les galeries, **codes des comités**, export CSV | **mot de passe** |
 
-API : `POST /api/responses` · `GET /api/gallery` (public) · `/api/admin/*` (cookie de session signé).
+API : `POST /api/responses` · `GET /api/gallery` (public) · `/api/gallery/*` (galerie scopée : super-admin ou comité) · `/api/comite/login` · `/api/admin/*` (super-admin). Auth par **cookie de session signé** : valeur `"ok"` = super-admin, `"owner:<clé>"` = comité scopé à sa galerie.
 
 ## Prérequis
 
@@ -88,8 +89,11 @@ Développement avec rechargement : `node --env-file=.env --watch server.js`.
   = comité assigné manuellement s'il existe, sinon comité demandé au sondage. **Pas de réaffectation
   automatique** : l'admin équilibre à la main via un menu déroulant (`POST /api/admin/assign`, persisté).
   Effectif vs cible (≈ n/4) affiché ; rotation déterministe sur 4 mois.
-- **Galerie** (`/` + `/admin`) : albums et photos pilotés par la base (`gallery_albums`, `gallery_photos`,
-  `settings`). L'admin crée des albums, téléverse des photos (redimensionnées côté navigateur, envoyées
-  en base64) et colle les liens Drive. La page d'accueil lit `GET /api/gallery`. Photos dans `public/images/`.
+- **Galerie décentralisée** (`/`, `/admin`, `/comite`) : albums et photos pilotés par la base
+  (`gallery_albums` avec colonne `owner`, `gallery_photos`, `settings`, `gallery_codes`). **Chaque comité
+  (+ le Club d'anglais) gère sa propre galerie** via `/comite` après connexion par **code partagé** (haché
+  en base, généré par le super-admin depuis `/admin`). Le super-admin voit/édite tout ; un comité est
+  **scopé à ses albums** (contrôle de périmètre côté serveur → `403` hors périmètre). Photos redimensionnées
+  côté navigateur, envoyées en base64, écrites dans `public/images/`. La page d'accueil lit `GET /api/gallery`.
 - **Dédup** côté admin par `nom|délégation` normalisés (réponse la plus récente conservée).
 - Pas de fonctionnalité « devoirs » — hors périmètre, ne pas réintroduire.
