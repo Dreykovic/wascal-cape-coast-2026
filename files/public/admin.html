@@ -39,6 +39,30 @@
   .rawtable th,.rawtable td{border:1px solid var(--cream2);padding:5px 7px;text-align:left;vertical-align:top;white-space:nowrap;}
   .rawtable th{background:var(--ink);color:#fff;}
   .hint{background:var(--cream);border:2px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:600;margin:0 0 16px;}
+  /* --- Vue imprimable « répartition des comités » : une page A4 par comité --- */
+  #printArea{display:none;}
+  .ppage{box-sizing:border-box;}
+  .phead{color:#fff;border:3px solid var(--ink);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .phead .em{font-size:40px;line-height:1;}
+  .phead h2{font-family:'Fraunces',serif;margin:0;font-size:30px;}
+  .phead .tag{font-size:14px;font-weight:700;opacity:.92;}
+  .phead .eff{margin-left:auto;background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:30px;padding:6px 14px;font-family:'Fraunces',serif;font-weight:900;font-size:18px;white-space:nowrap;}
+  .pmem{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1.5px dashed #d9c9a6;font-size:16px;}
+  .pmem .num{font-family:'Fraunces',serif;font-weight:900;color:var(--muted);width:26px;text-align:right;}
+  .pmem .nm{font-weight:800;}
+  .pmem .dg{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff;border:2px solid var(--ink);border-radius:20px;padding:2px 10px;}
+  .pmem .moved{margin-left:auto;font-size:12px;font-weight:800;color:var(--amber);background:#fff;border:1.5px solid var(--amber);border-radius:20px;padding:2px 9px;white-space:nowrap;}
+  .pfoot{margin-top:16px;font-size:12px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;}
+  @media print{
+    @page{size:A4 portrait;margin:14mm;}
+    html,body{background:#fff;}
+    body>*:not(#printArea){display:none !important;}
+    #printArea{display:block;}
+    .ppage{page-break-after:always;}
+    .ppage:last-child{page-break-after:auto;}
+    .pmem{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .phead,.pmem .dg{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
 </style>
 </head>
 <body>
@@ -70,6 +94,7 @@
       <span class="muted" id="subtitle"></span>
     </div>
     <div class="tools">
+      <button class="btn btn-primary" id="printBtn">🖨️ Répartition (PDF)</button>
       <a class="btn btn-ink" id="csvBtn" href="/api/admin/export.csv">⬇ Export CSV</a>
     </div>
   </div>
@@ -111,10 +136,13 @@
   </details>
 </div>
 
+<!-- Vue imprimable de la répartition : une page A4 par comité (cachée à l'écran) -->
+<div id="printArea"></div>
+
 <div class="kente" style="margin-top:40px"></div>
 
 <script type="module">
-import { COMMITTEES, GALLERY_OWNERS, flagSVG, esc, norm } from "/shared.js";
+import { COMMITTEES, GALLERY_OWNERS, COUNTRY, flagSVG, esc, norm } from "/shared.js";
 
 const NAMES = COMMITTEES.map(c=>c.name);
 const commOf = (name)=>COMMITTEES.find(c=>c.name===name);
@@ -484,6 +512,46 @@ async function saveDriveAll(){
   btn.textContent = r.ok ? "✓ Enregistré" : "⚠ Échec";
   setTimeout(()=>btn.textContent="Enregistrer",1500);
 }
+
+// --- Vue imprimable : une page A4 par comité (répartition après réaffectation) ---
+function pmemberRow(p, i){
+  const eff=effectiveOf(p), req=requestedOf(p);
+  const moved = eff && req && eff!==req;
+  const col=(COUNTRY[p.delegation]||{}).color||"#231a10";
+  return `<div class="pmem">
+    <span class="num">${i+1}</span>
+    <span class="nm">${esc(p.full_name)}</span>
+    <span class="dg" style="background:${col}">${flagSVG(p.delegation,18)} ${esc(p.delegation)}</span>
+    ${moved?`<span class="moved">↩ demandé : ${esc(req)}</span>`:""}
+  </div>`;
+}
+
+function committeePage(c, members, dateStr){
+  const sorted=[...members].sort((a,b)=>a.delegation.localeCompare(b.delegation)||a.full_name.localeCompare(b.full_name));
+  const rows = sorted.length
+    ? sorted.map((p,i)=>pmemberRow(p,i)).join("")
+    : '<p class="muted" style="padding:10px 6px">Aucun membre pour l\'instant.</p>';
+  const n=members.length;
+  return `<section class="ppage">
+    <div class="phead" style="background:${c.color}">
+      <span class="em">${c.emoji}</span>
+      <div><h2>${esc(c.name)}</h2><div class="tag">${esc(c.tag||"")}</div></div>
+      <span class="eff">${n} membre${n>1?"s":""}</span>
+    </div>
+    ${rows}
+    <div class="pfoot"><span>WASCAL Cape Coast 2026 — Répartition des comités</span><span>${dateStr}</span></div>
+  </section>`;
+}
+
+function buildPrint(){
+  const {groups, unassigned}=groupAll();
+  const dateStr=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
+  let html=COMMITTEES.map((c,i)=>committeePage(c, groups[i], dateStr)).join("");
+  if(unassigned.length) html+=committeePage({name:"À placer",color:"#231a10",emoji:"❓",tag:"Sans comité effectif"}, unassigned, dateStr);
+  document.getElementById("printArea").innerHTML=html;
+}
+
+document.getElementById("printBtn").addEventListener("click", ()=>{ buildPrint(); window.print(); });
 
 checkAuth();
 </script>
