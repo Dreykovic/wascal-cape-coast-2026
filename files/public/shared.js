@@ -43,6 +43,16 @@ export const COMMITTEES = [
   { name: "Culture & Échanges",   color: "#e85d1b", emoji: "🎭", tag: "Soirées-pays, rencontres ghanéennes" },
 ];
 
+// Propriétaires de galerie : 4 comités + Club d'anglais. La clé (slug) doit rester
+// alignée avec GALLERY_OWNERS dans server.js. Chacun gère sa propre galerie via /comite.
+export const GALLERY_OWNERS = [
+  { key: "club",    name: "Club d'anglais",       color: "#f2a900", emoji: "📣" },
+  { key: "sorties", name: "Sorties & Excursions", color: "#0e8c7a", emoji: "🌳" },
+  { key: "soirees", name: "Soirées & Jeux",       color: "#8a2d5d", emoji: "🎉" },
+  { key: "sport",   name: "Sport & Bien-être",    color: "#1c7a45", emoji: "⚽" },
+  { key: "culture", name: "Culture & Échanges",   color: "#e85d1b", emoji: "🎭" },
+];
+
 export const FLOORS = ["Étage (filles)", "Rez-de-chaussée (garçons)"];
 export const ENGLISH_LEVELS = ["Débutant", "Intermédiaire", "Avancé"];
 
