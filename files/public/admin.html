@@ -39,20 +39,19 @@
   .rawtable th,.rawtable td{border:1px solid var(--cream2);padding:5px 7px;text-align:left;vertical-align:top;white-space:nowrap;}
   .rawtable th{background:var(--ink);color:#fff;}
   .hint{background:var(--cream);border:2px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:600;margin:0 0 16px;}
-  /* --- Vue imprimable « répartition » : sobre, une page A4 par comité --- */
+  /* --- Vue imprimable « répartition » : sobre, noir sur blanc, une page A4 par comité --- */
   #printArea{display:none;}
-  .ppage{box-sizing:border-box;color:var(--ink);background:#fff;}
-  .phead{display:flex;align-items:baseline;gap:10px;border-bottom:3px solid var(--acc);padding-bottom:8px;}
-  .phead h2{font-family:'Fraunces',serif;font-weight:900;font-size:24pt;color:var(--acc);margin:0;}
-  .phead .em{font-size:21pt;}
-  .pcount{color:var(--muted);font-weight:700;font-size:11pt;margin:8px 0 14px;}
-  .pmem{display:flex;gap:8px;align-items:baseline;padding:7px 2px;border-bottom:1px solid #eee;font-size:12.5pt;}
-  .pmem .num{color:var(--acc);font-weight:800;min-width:24px;}
-  .pmem .nm{font-weight:700;}
-  .pmem .dg{color:var(--muted);}
-  .pmem .moved{margin-left:auto;color:var(--amber);font-weight:700;font-size:10pt;white-space:nowrap;}
-  .pempty{color:var(--muted);font-style:italic;padding:8px 2px;}
-  .pfoot{margin-top:18px;font-size:9pt;color:var(--muted);}
+  .ppage{box-sizing:border-box;color:#000;background:#fff;font-family:'Hanken Grotesk',Arial,sans-serif;}
+  .phead{border-bottom:2px solid #000;padding-bottom:6px;}
+  .phead h2{font-weight:700;font-size:20pt;color:#000;margin:0;}
+  .pcount{color:#000;font-weight:600;font-size:11pt;margin:6px 0 14px;}
+  .pmem{display:flex;gap:8px;align-items:baseline;padding:6px 2px;border-bottom:1px solid #ccc;font-size:12.5pt;}
+  .pmem .num{font-weight:700;min-width:24px;}
+  .pmem .nm{font-weight:600;}
+  .pmem .dg{color:#000;}
+  .pmem .moved{margin-left:auto;font-weight:600;font-size:10pt;white-space:nowrap;}
+  .pempty{font-style:italic;padding:8px 2px;}
+  .pfoot{margin-top:18px;font-size:9pt;color:#000;border-top:1px solid #000;padding-top:6px;}
   @media print{
     @page{size:A4 portrait;margin:16mm;}
     html,body{background:#fff;}
@@ -523,8 +522,8 @@ function committeePage(c, members, dateStr){
         return `<div class="pmem"><span class="num">${i+1}.</span><span class="nm">${esc(p.full_name)}</span><span class="dg">— ${esc(p.delegation)}</span>${moved?`<span class="moved">↩ demandé : ${esc(req)}</span>`:""}</div>`;
       }).join("")
     : `<div class="pempty">Aucun membre pour l'instant.</div>`;
-  return `<section class="ppage" style="--acc:${c.color}">
-    <div class="phead"><span class="em">${c.emoji}</span><h2>${esc(c.name)}</h2></div>
+  return `<section class="ppage">
+    <div class="phead"><h2>${esc(c.name)}</h2></div>
     <div class="pcount">${n} membre${n>1?"s":""} · au ${dateStr}</div>
     ${rows}
     <div class="pfoot">WASCAL Cape Coast 2026 — Répartition des comités</div>
