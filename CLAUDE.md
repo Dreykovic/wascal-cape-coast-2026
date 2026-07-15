@@ -25,8 +25,23 @@ signé. Base **SQLite** via le module intégré `node:sqlite` (**Node ≥ 22.5**
   `public/app.css` (tokens + composants) et `public/shared.js` (module ES : délégations, comités,
   drapeaux SVG, RNG seedé, helpers). Les pages les chargent par `<link>` / `import`.
 - Libs externes par CDN au runtime : polices Google **Fraunces** (titres) + **Hanken Grotesk** (UI).
-- Lancer : `cd files && npm install && node --env-file=.env server.js` → http://localhost:3000.
-  Détails et déploiement (systemd + nginx + Certbot) dans **`files/README.md`** (source de vérité du déploiement).
+- Lancer / déployer : voir **§ Commandes** ci-dessous. Déploiement VPS (systemd + nginx + Certbot)
+  détaillé dans **`files/README.md`** (source de vérité) et automatisé par `provision.sh` / `deploy.sh`.
+
+## Commandes
+
+Toujours **depuis `files/`**. Prérequis **Node ≥ 22.5** (module intégré `node:sqlite`) — vérifier `node --version`.
+
+| But | Commande |
+|---|---|
+| Installer les deps | `npm install` |
+| Lancer (local) | `node --env-file=.env server.js` → http://localhost:3000 |
+| Développer (reload) | `node --env-file=.env --watch server.js` (= `npm run dev`) |
+| Lancer via env shell | `npm start` (variables déjà exportées, sans `.env`) |
+
+**Aucun build, aucun test, aucun linter** dans ce dépôt — inutile d'en chercher. Le front vanilla est servi tel
+quel ; la base SQLite est créée seule au 1er lancement (`./data/wascal.db` — effacer ce fichier = repartir de
+zéro). Copier `.env.example` → `.env` avant le premier lancement.
 
 ## Structure
 
@@ -42,6 +57,8 @@ signé. Base **SQLite** via le module intégré `node:sqlite` (**Node ≥ 22.5**
 | `files/public/app.css` | Charte partagée (tokens `:root`, kente, stickers, formulaires) |
 | `files/public/shared.js` | Données + utilitaires partagés (module ES) |
 | `files/README.md` | Lancement local + déploiement VPS — **source de vérité du déploiement** |
+| `files/provision.sh` | **Bootstrap VPS** (première fois) : Node 22 → `/opt/node22`, `.env` (secrets auto-générés), service systemd, vhost nginx. Prod = port **3300**, `HOST=127.0.0.1`, domaine `wascal.birewa.com` |
+| `files/deploy.sh` | **Mise à jour non destructive** d'un déploiement existant : sauvegarde horodatée de la base, `git reset --hard origin/main`, `rsync --delete` en **préservant** `data/` + `.env` + `public/images/`, `npm install --omit=dev`, redémarre le service + vérifie |
 | `files/.env.example` | Config : `ADMIN_PASSWORD`, `COOKIE_SECRET`, `PORT`, `DB_PATH`, `NODE_ENV` |
 | `files/programme-activites-cape-coast.docx` | Document source du contenu des activités (non servi) |
 | `affiches/affiche-0{1..4}-*.html` | 4 affiches A4 imprimables (`@page` print), exportées en `.pdf` à côté ; une par comité |
@@ -136,6 +153,6 @@ Tokens dans `public/app.css` (`:root`) ; données de couleur/drapeaux dans `publ
   `app.css` / `shared.js` (déjà servis), pas via un bundler.
 - Backend : ESM (`"type":"module"`), dépendances **pur JS** uniquement (pas de natif à compiler) ;
   privilégier le module intégré `node:sqlite`.
-- **Secrets hors du code** : `ADMIN_PASSWORD` / `COOKIE_SECRET` via env (`.env` local, `Environment=` systemd) — jamais en dur dans une page ou commités.
+- **Secrets hors du code** : `ADMIN_PASSWORD` / `COOKIE_SECRET` via env (`.env` local, `Environment=` systemd) — jamais en dur dans une page ou commités. ⚠️ Fallbacks silencieux si absents (`server.js`) : `ADMIN_PASSWORD` = `"wascal2026"`, `COOKIE_SECRET` = valeur **aléatoire régénérée à chaque démarrage** (⇒ toutes les sessions sont invalidées à chaque redémarrage). **Toujours** définir les deux en prod.
 - L'admin doit rester protégé : ne jamais servir `/api/admin/*` sans le `preHandler` d'auth.
 - Les affiches sont calibrées **A4 portrait** (`@page{size:A4}`, unités mm) — préserver la mise en page à l'impression.
