@@ -6,153 +6,79 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Contexte
 
-Boîte à outils pour le programme **WASCAL Cape Coast 2026** : 32 étudiant·e·s, 8 délégations
-francophones d'Afrique de l'Ouest (Bénin, Burkina Faso, Côte d'Ivoire, Guinée, Mali, Niger, Sénégal,
-Togo), 16 semaines de cours d'anglais au Ghana. Le programme repose sur **trois piliers** : le
-**programme des cours**, les **rappels**, et les **activités** (sorties, soirées-pays, sport, comités).
-Il n'y a **pas** de fonctionnalité « devoirs / homework » — elle a été explicitement retirée du périmètre.
-Ne pas la réintroduire.
+Boîte à outils pour le programme **WASCAL Cape Coast 2026** (32 étudiant·e·s, 8 délégations
+francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana). Trois piliers : **programme des
+cours**, **rappels**, **activités**. Il n'y a **pas** de fonctionnalité « devoirs / homework » — hors
+périmètre, ne pas la réintroduire.
 
-## Stack : Node + Fastify + SQLite (aucun build)
+**Ce dépôt est le portage Laravel** d'une app Node/Fastify d'origine (désormais archivée dans
+`archive/files/`), refait pour tourner sur un **hébergement mutualisé Hostinger Premium** (PHP + MySQL,
+sans VPS, sans Node). Le **front est réutilisé tel quel** ; seule la couche serveur a été réécrite en Laravel.
 
-L'app web vit dans `files/` : un **serveur Fastify** unique (`server.js`) sert le front statique
-(`public/`), l'**API publique** (dépôt du sondage) et l'**API admin** protégée par cookie de session
-signé. Base **SQLite** via le module intégré `node:sqlite` (**Node ≥ 22.5**, testé sur Node 24) — donc
-**aucune dépendance native à compiler**, déploiement VPS trivial.
+## Stack : Laravel 13 + MySQL (aucun build front)
 
-- **Front vanilla** : HTML/CSS/JS natif, **pas de bundler, pas d'étape de build**. Mais contrairement à
-  l'ancienne version « tout inline », deux fichiers sont **partagés et servis** par le backend :
-  `public/app.css` (tokens + composants) et `public/shared.js` (module ES : délégations, comités,
-  drapeaux SVG, RNG seedé, helpers). Les pages les chargent par `<link>` / `import`.
-- Libs externes par CDN au runtime : polices Google **Fraunces** (titres) + **Hanken Grotesk** (UI).
-- Lancer / déployer : voir **§ Commandes** ci-dessous. Déploiement VPS (systemd + nginx + Certbot)
-  détaillé dans **`files/README.md`** (source de vérité) et automatisé par `provision.sh` / `deploy.sh`.
+- **Back** : Laravel 13 / PHP 8.2+. Base **MySQL** en prod, **SQLite** en dev (change juste `DB_CONNECTION`).
+- **Front** : HTML/CSS/JS **vanilla**, **aucun bundler, aucune étape de build**. Les pages
+  (`resources/pages/*.html`) sont servies **statiquement** via `PageController` (`response()->file`), pas
+  en Blade — leur JS inline entrerait en conflit avec `{{ }}`. Les assets partagés `public/app.css` et
+  `public/shared.js` (module ES) sont servis au web root, aux mêmes chemins que dans l'app d'origine.
+- Le levier du portage : **URL d'API identiques** à l'app Node (`/api/responses`, `/api/gallery`,
+  `/api/admin/*`, `/api/gallery/*`, `/api/comite/*`) → le front fonctionne **sans modification**.
 
 ## Commandes
 
-Toujours **depuis `files/`**. Prérequis **Node ≥ 22.5** (module intégré `node:sqlite`) — vérifier `node --version`.
+Depuis la racine du projet. Prérequis **PHP 8.2+**, **Composer**.
 
 | But | Commande |
 |---|---|
-| Installer les deps | `npm install` |
-| Lancer (local) | `node --env-file=.env server.js` → http://localhost:3000 |
-| Développer (reload) | `node --env-file=.env --watch server.js` (= `npm run dev`) |
-| Lancer via env shell | `npm start` (variables déjà exportées, sans `.env`) |
+| Installer | `composer install` |
+| Base + données de démo | `php artisan migrate:fresh --seed` (SQLite local par défaut) |
+| Lancer en local | `php artisan serve --port=8080` → http://127.0.0.1:8080 (port 8000 souvent bloqué sous Windows) |
+| Tests | `php artisan test` |
+| Vider les caches | `php artisan optimize:clear` |
 
-**Aucun build, aucun test, aucun linter** dans ce dépôt — inutile d'en chercher. Le front vanilla est servi tel
-quel ; la base SQLite est créée seule au 1er lancement (`./data/wascal.db` — effacer ce fichier = repartir de
-zéro). Copier `.env.example` → `.env` avant le premier lancement.
+Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualisé : voir **`DEPLOY-HOSTINGER.md`**.
 
-## Structure
+## Architecture
 
 | Chemin | Rôle |
 |---|---|
-| `files/server.js` | Serveur Fastify : pages, API publique (`POST /api/responses`, `GET /api/gallery`), API galerie scopée (`/api/gallery/*`), API admin (`/api/admin/*`), login comité (`/api/comite/*`) |
-| `files/db.js` | `node:sqlite` — tables `responses`, `gallery_albums` (avec `owner`), `gallery_photos`, `settings`, `gallery_codes` ; migrations légères ; helpers réponses + galerie + codes |
-| `files/public/index.html` | Site informatif en **deck de slides** (hero, région, objectifs, club, activités, délégations, Ubuntu, galerie, calendrier, festival) — **public**. Page **autonome** (CSS+JS inline, n'utilise PAS `app.css`/`shared.js`), nav clavier/tactile/molette. La **galerie** lit `GET /api/gallery` (albums + lightbox). Liens vers `/survey`. |
-| `files/public/survey.html` | Sondage 4 étapes → `POST /api/responses` — **public** |
-| `files/public/admin.html` | **Super-admin** : répartition 4 comités, rotation 4 mois, idées proposées, **toutes** les galeries (+ propriétaire de chaque album), **codes d'accès des comités**, lien Drive global, export CSV, **impression PDF de la répartition** (1 page A4/comité) — **protégé par `ADMIN_PASSWORD`** |
-| `files/public/comite.html` | Page **`/comite`** : un comité (ou le Club d'anglais) gère **uniquement sa propre galerie** (albums, upload photos, légendes, lien Drive) après connexion par **code partagé** — **public mais scopé par code** |
-| `files/public/images/` | Photos de galerie **téléversées via l'admin ou `/comite`** (servies en statique ; nommées `g<album>-<hex>.jpg`). Gérées en base, ne pas y toucher à la main. |
-| `files/public/app.css` | Charte partagée (tokens `:root`, kente, stickers, formulaires) |
-| `files/public/shared.js` | Données + utilitaires partagés (module ES) |
-| `files/README.md` | Lancement local + déploiement VPS — **source de vérité du déploiement** |
-| `files/provision.sh` | **Bootstrap VPS** (première fois) : Node 22 → `/opt/node22`, `.env` (secrets auto-générés), service systemd, vhost nginx. Prod = port **3300**, `HOST=127.0.0.1`, domaine `wascal.birewa.com` |
-| `files/deploy.sh` | **Mise à jour non destructive** d'un déploiement existant : sauvegarde horodatée de la base, `git reset --hard origin/main`, `rsync --delete` en **préservant** `data/` + `.env` + `public/images/`, `npm install --omit=dev`, redémarre le service + vérifie |
-| `files/.env.example` | Config : `ADMIN_PASSWORD`, `COOKIE_SECRET`, `PORT`, `DB_PATH`, `NODE_ENV` |
-| `files/programme-activites-cape-coast.docx` | Document source du contenu des activités (non servi) |
-| `affiches/affiche-0{1..4}-*.html` | 4 affiches A4 imprimables (`@page` print), exportées en `.pdf` à côté ; une par comité |
+| `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
+| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin`, `/comite` = fichiers `resources/pages/*.html` |
+| `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées |
+| `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion scopée `/api/gallery/*` (manage, album/photo CRUD, upload base64) |
+| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, `assign`, export CSV, réglage Drive global, génération/révocation des **codes** de comité |
+| `app/Http/Controllers/AuthController.php` | Login admin (mot de passe), login comité (code haché bcrypt), logout, `me`, `session` |
+| `app/Http/Middleware/RequireAdmin.php` · `RequireGallery.php` | Alias `admin` / `gallery`. Gardent les routes ; le **périmètre** (album d'un autre comité) est vérifié dans le contrôleur |
+| `app/Support/WascalSession.php` | Deux rôles portés par la **session** (équivalent du cookie signé Node) : `super` / `owner:<clé>`. `outOfScope()` = un comité ne touche qu'à SES albums |
+| `app/Support/GalleryImage.php` | Décodage data-URL base64 + écriture/suppression dans le dossier d'uploads (`config('wascal.uploads_path')`) |
+| `app/Support/Sanitize.php` | Nettoyage couleur hex / URL http(s) |
+| `app/Models/*` | `Response` (casts JSON + `effectiveCommittee()`), `GalleryAlbum` (a des `photos`), `GalleryPhoto`, `Setting` (KV, `read/write`), `GalleryCode` (PK `owner`) |
+| `config/wascal.php` | **Référentiels serveur** (délégations, comités, propriétaires de galerie, activités, talents, `admin_password`, `uploads_path`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
+| `database/seeders/GalleryOwnersSeeder.php` | Sème 1 album par propriétaire (4 comités + Club d'anglais) si la galerie est vide |
+| `resources/pages/*.html` | Front vanilla repris de l'app d'origine (index, survey, admin, comite) |
+| `DEPLOY-HOSTINGER.md` | **Guide de déploiement mutualisé** (racine web sur `public/`, upload avec `vendor/`, MySQL, migrations) |
 
-`data/` (base SQLite), `node_modules/`, `.env` et `.remember/` ne sont **pas** versionnés ni servis — ne pas y toucher.
+## Le cœur : galerie décentralisée + comités
 
-## Le trio survey / admin / API
-
-C'est le cœur technique. Bien le comprendre avant de modifier `survey.html`, `admin.html` ou le backend.
-
-- **Schéma** (`db.js`) : une seule table `responses` (`full_name`, `delegation`, `floor`,
-  `committee_rank` JSON[], `activities` JSON[], `proposed_activities` JSON[], `talents` JSON[],
-  `english_level`, `dietary`, `notes`, `created_at`, `assigned_committee`). Les `text[]` sont stockés en
-  **JSON** (SQLite n'a pas de type tableau) et re-parsés à la lecture. `assigned_committee` = comité fixé
-  **manuellement** par l'admin (null = comité demandé). Ajout de colonne = migration `ALTER TABLE`
-  idempotente en tête de `db.js` (cf. `proposed_activities`, `assigned_committee`).
-- **Sondage en 4 étapes** : (1) identité — nom, délégation, logement ; (2) **un seul comité souhaité** ;
-  (3) activités — on **coche** dans la liste (`activities`) **et on propose** ses propres idées libres
-  (`proposed_activities`, puces supprimables) — plus les talents ; (4) niveau d'anglais, régime, notes.
-- **Auth admin** : mot de passe unique (`ADMIN_PASSWORD`) → `POST /api/admin/login` pose un **cookie signé**
-  (`@fastify/cookie`, `httpOnly`, `secure` en prod). Les routes `/api/admin/*` sont gardées par un
-  `preHandler`. Ne jamais exposer les réponses sans cette garde.
-- **Anti-doublon** : le sondage pose un flag `localStorage` (`wascal_survey_done`) côté appareil ; l'admin
-  déduplique **côté lecture** par `nom|délégation` normalisés, en gardant la réponse la plus récente
-  (les réponses arrivent triées récentes → anciennes).
-- **Validation** : faite **côté serveur** dans `POST /api/responses` (délégation/comité/étage/niveau dans
-  les référentiels ; idées proposées nettoyées, bornées à 20, dédoublonnées sans casse). Le front valide aussi mais n'est pas la source de confiance.
-
-### La répartition des comités (`admin.html`)
-
-4 comités (`COMMITTEES` dans `shared.js` : Sorties & Excursions, Soirées & Jeux, Sport & Bien-être,
-Culture & Échanges — un par affiche). Le sondage collecte **un seul comité demandé** par personne
-(dans `committee_rank[0]`).
-
-**Pas de réaffectation automatique** (choix produit, juin 2026). Chaque personne est placée dans son
-**comité effectif** = `assigned_committee` s'il est défini, sinon `committee_rank[0]` (`effectiveOf()`).
-Les comités reflètent donc les choix bruts ; ils peuvent être déséquilibrés. L'admin **équilibre à la main,
-quand il veut** : un menu déroulant par membre appelle `POST /api/admin/assign {id, committee}` qui
-**persiste** dans `assigned_committee` (envoyer `committee:""` réinitialise → retour au comité demandé).
-Chaque comité affiche son **effectif vs cible** (≈ n/4) et un badge **« ↩ demandé : … »** sur les personnes
-déplacées, pour voir leur comité d'origine. Plus de seed / « Relancer » (l'affectation est déterministe).
-
-La **rotation sur 4 mois** reste affichée : chaque comité garde ses membres et tourne sur les 4 rôles via
-`(g+m)%4`.
-
-### La galerie décentralisée par comité (`admin.html` + `comite.html` + `index.html`)
-
-La galerie de la page d'accueil est **pilotée par la base**, pas en dur. Tables `gallery_albums`
-(`title`, `color`, `drive_url`, **`owner`**, `sort_order`) et `gallery_photos` (`album_id`, `filename`,
-`caption`, `sort_order`) ; le lien Drive global vit dans `settings` (clé `drive_all`). Au **premier
-démarrage**, `seedGalleryIfEmpty` crée 5 albums, un par **propriétaire**. Le **nombre d'albums est libre**.
-
-**Chaque comité gère sa propre galerie** (choix produit, juin 2026). Il y a **5 propriétaires de galerie**
-(`GALLERY_OWNERS`, clés stables alignées entre `server.js` et `shared.js`) : `club` (Club d'anglais) +
-les 4 comités (`sorties`, `soirees`, `sport`, `culture`). Chaque album porte une colonne `owner` = la clé
-de son propriétaire (ou `null` = non rattaché, géré par le super-admin seulement).
-
-**Deux rôles, un seul cookie signé** (`COOKIE_NAME`) :
-- **super-admin** (`ADMIN_PASSWORD` → cookie valeur `"ok"`) : voit/édite **tout**, change le `owner` d'un
-  album, gère le lien Drive global, **génère les codes** des comités. Routes `/api/admin/*` (`requireAdmin`).
-- **comité** (cookie valeur `"owner:<clé>"`, posé par `POST /api/comite/login {owner, code}`) : ne voit/édite
-  **que ses albums**. Le code partagé est **haché en base** (`gallery_codes`, scrypt via `node:crypto`,
-  zéro dépendance) ; il est généré par le super-admin et **affiché en clair une seule fois**.
-
-- **Public** : `GET /api/gallery` → albums (+ `owner`/`ownerName`) + photos (`src` = `images/<fichier>`) +
-  `drive_all`. `index.html` rend une **étagère d'albums** + **lightbox** (garde `window.__lbOpen`).
-- **Gestion scopée** (gardée par `requireGallery` = super OU comité) : `GET /api/gallery/manage`,
-  `POST/PATCH/DELETE /api/gallery/album`, `POST/PATCH/DELETE /api/gallery/photo`. Le **contrôle de périmètre
-  est côté serveur** (`outOfScope`) : un comité reçoit `403` s'il vise un album dont `owner` ≠ le sien, et
-  le `owner` est **forcé** à son comité quand il crée un album. Super-only : `POST /api/admin/gallery/settings`
-  (Drive global), `POST /api/admin/gallery/code` + `DELETE /api/admin/gallery/code/:owner` (codes).
-- **Upload sans dépendance** : la photo est **redimensionnée côté navigateur** (canvas → JPEG ~1600 px) et
-  envoyée en **data-URL base64** ; le serveur la décode et l'écrit dans `public/images/` (route à `bodyLimit`
-  relevé). Supprimer une photo/un album efface aussi le(s) fichier(s) sur le disque.
-- **Migration** : ajout de la colonne `owner` = `ALTER TABLE` idempotent en tête de `db.js` qui **rattache les
-  albums déjà semés à leur propriétaire par titre** (bases existantes en prod préservées).
-
-## Identité visuelle (charte partagée)
-
-Tokens dans `public/app.css` (`:root`) ; données de couleur/drapeaux dans `public/shared.js`. Toute page reprend :
-- Encre `#231a10`, papier `#fffaf0`, crème `#fbf1dc` / `#f6e6c4`
-- Accents : or `#f2a900`, ambre `#e85d1b`, rouge `#c5302b`, vert `#1c7a45`, teal `#0e8c7a`, bleu `#1e3f8f`, prune `#8a2d5d`
-- Bande **Kente** : `--kente` (rayures or/rouge/vert/bleu/encre/ambre)
-- Couleur par délégation : objet `COUNTRY` + drapeaux SVG `flagSVG()` dans `shared.js` (8 pays ; réutilisés site/survey/admin — garder cohérent avec les affiches)
-- Couleur par comité : champ `color` de `COMMITTEES` (Sorties→teal, Soirées→prune, Sport→vert, Culture→ambre)
-- Composants « stickers » : bordure encre épaisse + ombre portée décalée nette (`5px 5px 0`)
-- Titres en **Fraunces** (600–900), texte en **Hanken Grotesk** (400–800)
+- **Répartition** (`admin.html`) : chaque personne est dans son comité **effectif** = `assigned_committee`
+  s'il est défini, sinon `committee_rank[0]` (`Response::effectiveCommittee()`). **Pas de réaffectation
+  automatique** : l'admin équilibre à la main via `POST /api/admin/assign` (persisté). Le **PDF de
+  répartition est côté navigateur** (`window.print()` dans `admin.html`) — rien à coder côté serveur.
+- **Galerie scopée** : 5 propriétaires (`club` + 4 comités). Chaque album a une colonne `owner`. Le
+  super-admin voit/édite tout ; un comité connecté par **code** (haché en base, généré par l'admin) ne
+  gère que **ses** albums. Le contrôle de périmètre est **côté serveur** (`WascalSession::outOfScope` →
+  403), jamais côté UI. Upload = image redimensionnée par le navigateur, envoyée en **base64**, écrite
+  dans `public/uploads` (ou `uploads_path`).
 
 ## Conventions
 
-- **Pas de build, pas de framework front** : HTML/CSS/JS natif servi par Fastify. Mutualiser via
-  `app.css` / `shared.js` (déjà servis), pas via un bundler.
-- Backend : ESM (`"type":"module"`), dépendances **pur JS** uniquement (pas de natif à compiler) ;
-  privilégier le module intégré `node:sqlite`.
-- **Secrets hors du code** : `ADMIN_PASSWORD` / `COOKIE_SECRET` via env (`.env` local, `Environment=` systemd) — jamais en dur dans une page ou commités. ⚠️ Fallbacks silencieux si absents (`server.js`) : `ADMIN_PASSWORD` = `"wascal2026"`, `COOKIE_SECRET` = valeur **aléatoire régénérée à chaque démarrage** (⇒ toutes les sessions sont invalidées à chaque redémarrage). **Toujours** définir les deux en prod.
-- L'admin doit rester protégé : ne jamais servir `/api/admin/*` sans le `preHandler` d'auth.
-- Les affiches sont calibrées **A4 portrait** (`@page{size:A4}`, unités mm) — préserver la mise en page à l'impression.
+- **Parité avec l'app Node d'origine** (archivée dans `archive/files/`) : mêmes contrats d'API, mêmes
+  règles de validation, mêmes messages. Le front lit `d.errors` (pluriel) pour le sondage, `d.error`
+  (singulier) pour les erreurs galerie/admin — respecter cette distinction.
+- **Dev sur SQLite, prod sur MySQL** : garder le SQL **portable** (Eloquent/migrations, pas de fonction
+  spécifique à un moteur).
+- **Secrets hors du code** : `ADMIN_PASSWORD` via `.env` (⚠️ fallback `wascal2026` si absent — définir en
+  prod). Codes de comité hachés (`Hash::make`/`Hash::check`, bcrypt).
+- **Aucun build front** : mutualiser via `public/app.css` / `public/shared.js`, jamais via un bundler.
+  Ne pas convertir les pages en Blade (conflit `{{ }}` avec le JS inline).
