@@ -26,15 +26,10 @@ return [
 
     'english_levels' => ['Débutant', 'Intermédiaire', 'Avancé'],
 
-    // 4 comités (un par affiche).
-    'committees' => [
-        ['name' => 'Sorties & Excursions', 'color' => '#0e8c7a', 'emoji' => '🌳', 'tag' => 'Destinations, transport, comptes'],
-        ['name' => 'Soirées & Jeux',       'color' => '#8a2d5d', 'emoji' => '🎉', 'tag' => 'Films, musique, karaoké, jeux'],
-        ['name' => 'Sport & Bien-être',    'color' => '#1c7a45', 'emoji' => '⚽', 'tag' => 'Footing, foot, volley, tournois'],
-        ['name' => 'Culture & Échanges',   'color' => '#e85d1b', 'emoji' => '🎭', 'tag' => 'Soirées-pays, rencontres ghanéennes'],
-    ],
-
-    // Propriétaires de galerie : 4 comités + Club d'anglais. La clé (slug) est stable.
+    // Étiquettes d'activité : catégorisent à la fois les albums de la galerie et les étapes
+    // du parcours (`journey_stages.tag`). Anciennement les 4 « comités » (répartition, connexion
+    // par code) — désormais de simples étiquettes de couleur, sans compte ni périmètre associé.
+    // Le Club d'anglais (et le super-admin) gère tout depuis un espace unique.
     'gallery_owners' => [
         ['key' => 'club',    'name' => "Club d'anglais",       'color' => '#f2a900', 'emoji' => '📣'],
         ['key' => 'sorties', 'name' => 'Sorties & Excursions', 'color' => '#0e8c7a', 'emoji' => '🌳'],

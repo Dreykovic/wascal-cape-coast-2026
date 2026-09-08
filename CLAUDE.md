@@ -11,6 +11,14 @@ francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana). Trois pilier
 cours**, **rappels**, **activités**. Il n'y a **pas** de fonctionnalité « devoirs / homework » — hors
 périmètre, ne pas la réintroduire.
 
+Le site est un **carnet de bord** du séjour, porté par le **Club d'anglais** : la page `/parcours`
+raconte les étapes du séjour au fil du temps, et la galerie montre les activités qui s'y sont
+déroulées. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
+de comité, plus de connexion par code de comité, plus de réaffectation par l'admin) — hors périmètre,
+ne pas la réintroduire. Le sondage (`/survey`) collecte encore logement, niveau d'anglais, activités,
+talents ; une éventuelle transformation en « livre d'or » (contribution après-séjour) est trackée en
+issue GitHub, pas encore implémentée.
+
 **Ce dépôt est le portage Laravel** d'une app Node/Fastify d'origine (désormais archivée dans
 `archive/files/`), refait pour tourner sur un **hébergement mutualisé Hostinger Premium** (PHP + MySQL,
 sans VPS, sans Node). Le **front est réutilisé tel quel** ; seule la couche serveur a été réécrite en Laravel.
@@ -22,8 +30,10 @@ sans VPS, sans Node). Le **front est réutilisé tel quel** ; seule la couche se
   (`resources/pages/*.html`) sont servies **statiquement** via `PageController` (`response()->file`), pas
   en Blade — leur JS inline entrerait en conflit avec `{{ }}`. Les assets partagés `public/app.css` et
   `public/shared.js` (module ES) sont servis au web root, aux mêmes chemins que dans l'app d'origine.
-- Le levier du portage : **URL d'API identiques** à l'app Node (`/api/responses`, `/api/gallery`,
-  `/api/admin/*`, `/api/gallery/*`, `/api/comite/*`) → le front fonctionne **sans modification**.
+- Le levier du portage : **URL d'API identiques** à l'app Node d'origine pour ce qui subsiste
+  (`/api/responses`, `/api/gallery`, `/api/admin/*`, `/api/gallery/*`) → ce front fonctionne sans
+  modification. Le concept de comités (et ses routes `/comite`, `/api/comite/*`) a été retiré du
+  portage ; `/api/journey-stages` et `/parcours` sont propres à Laravel, sans équivalent Node.
 
 ## Commandes
 
@@ -44,31 +54,32 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | Chemin | Rôle |
 |---|---|
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
-| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin`, `/comite` = fichiers `resources/pages/*.html` |
+| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin`, `/parcours` = fichiers `resources/pages/*.html` |
 | `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées |
-| `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion scopée `/api/gallery/*` (manage, album/photo CRUD, upload base64) |
-| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, `assign`, export CSV, réglage Drive global, génération/révocation des **codes** de comité |
-| `app/Http/Controllers/AuthController.php` | Login admin (mot de passe), login comité (code haché bcrypt), logout, `me`, `session` |
-| `app/Http/Middleware/RequireAdmin.php` · `RequireGallery.php` | Alias `admin` / `gallery`. Gardent les routes ; le **périmètre** (album d'un autre comité) est vérifié dans le contrôleur |
-| `app/Support/WascalSession.php` | Deux rôles portés par la **session** (équivalent du cookie signé Node) : `super` / `owner:<clé>`. `outOfScope()` = un comité ne touche qu'à SES albums |
+| `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
+| `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
+| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, export CSV, réglage Drive global |
+| `app/Http/Controllers/AuthController.php` | Login admin (mot de passe), logout, `me`, `session` |
+| `app/Http/Middleware/RequireAdmin.php` | Alias `admin`. Seul rôle d'accès : super-admin (plus de périmètre par comité à vérifier) |
+| `app/Support/WascalSession.php` | Un seul rôle porté par la **session** (équivalent du cookie signé Node) : `super` |
 | `app/Support/GalleryImage.php` | Décodage data-URL base64 + écriture/suppression dans le dossier d'uploads (`config('wascal.uploads_path')`) |
 | `app/Support/Sanitize.php` | Nettoyage couleur hex / URL http(s) |
-| `app/Models/*` | `Response` (casts JSON + `effectiveCommittee()`), `GalleryAlbum` (a des `photos`), `GalleryPhoto`, `Setting` (KV, `read/write`), `GalleryCode` (PK `owner`) |
-| `config/wascal.php` | **Référentiels serveur** (délégations, comités, propriétaires de galerie, activités, talents, `admin_password`, `uploads_path`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
-| `database/seeders/GalleryOwnersSeeder.php` | Sème 1 album par propriétaire (4 comités + Club d'anglais) si la galerie est vide |
-| `resources/pages/*.html` | Front vanilla repris de l'app d'origine (index, survey, admin, comite) |
+| `app/Models/*` | `Response` (casts JSON), `JourneyStage` (étapes du parcours, `tagInfo()`), `GalleryAlbum` (a des `photos`), `GalleryPhoto`, `Setting` (KV, `read/write`) |
+| `config/wascal.php` | **Référentiels serveur** (délégations, étiquettes d'activité/galerie, activités, talents, `admin_password`, `uploads_path`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
+| `database/seeders/GalleryOwnersSeeder.php` | Sème 1 album par étiquette (4 étiquettes + Club d'anglais) si la galerie est vide |
+| `database/seeders/JourneyStageSeeder.php` | Sème une trame de 8 étapes (titres/textes à ajuster) si `journey_stages` est vide |
+| `resources/pages/*.html` | Front vanilla (index, survey, admin, parcours) |
 | `DEPLOY-HOSTINGER.md` | **Guide de déploiement mutualisé** (racine web sur `public/`, upload avec `vendor/`, MySQL, migrations) |
 
-## Le cœur : galerie décentralisée + comités
+## Le cœur : le carnet de bord (parcours + galerie)
 
-- **Répartition** (`admin.html`) : chaque personne est dans son comité **effectif** = `assigned_committee`
-  s'il est défini, sinon `committee_rank[0]` (`Response::effectiveCommittee()`). **Pas de réaffectation
-  automatique** : l'admin équilibre à la main via `POST /api/admin/assign` (persisté). Le **PDF de
-  répartition est côté navigateur** (`window.print()` dans `admin.html`) — rien à coder côté serveur.
-- **Galerie scopée** : 5 propriétaires (`club` + 4 comités). Chaque album a une colonne `owner`. Le
-  super-admin voit/édite tout ; un comité connecté par **code** (haché en base, généré par l'admin) ne
-  gère que **ses** albums. Le contrôle de périmètre est **côté serveur** (`WascalSession::outOfScope` →
-  403), jamais côté UI. Upload = image redimensionnée par le navigateur, envoyée en **base64**, écrite
+- **Parcours** (`/parcours`, table `journey_stages`) : chronologie du séjour, gérée depuis `/admin`
+  (titre, étiquette de couleur, dates en texte libre, corps rédigé au passé). Ordre = `sort_order`,
+  réordonné via `POST /api/admin/journey-stages/reorder {ids: [...]}`.
+- **Galerie** : chaque album a une colonne `owner`, qui est désormais une simple **étiquette de
+  couleur** (`config('wascal.gallery_owners')` : Club d'anglais + 4 étiquettes), pas un compte scopé.
+  Un seul espace de gestion (`/admin`, super-admin) ; pas de connexion par code, pas de périmètre à
+  vérifier côté serveur. Upload = image redimensionnée par le navigateur, envoyée en **base64**, écrite
   dans `public/uploads` (ou `uploads_path`).
 
 ## Conventions
@@ -79,6 +90,6 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 - **Dev sur SQLite, prod sur MySQL** : garder le SQL **portable** (Eloquent/migrations, pas de fonction
   spécifique à un moteur).
 - **Secrets hors du code** : `ADMIN_PASSWORD` via `.env` (⚠️ fallback `wascal2026` si absent — définir en
-  prod). Codes de comité hachés (`Hash::make`/`Hash::check`, bcrypt).
+  prod).
 - **Aucun build front** : mutualiser via `public/app.css` / `public/shared.js`, jamais via un bundler.
   Ne pas convertir les pages en Blade (conflit `{{ }}` avec le JS inline).

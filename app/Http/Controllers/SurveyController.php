@@ -25,12 +25,6 @@ class SurveyController extends Controller
             $errors[] = 'Délégation invalide.';
         }
 
-        $committeeRank = array_map('strval', is_array($b['committee_rank'] ?? null) ? $b['committee_rank'] : []);
-        $committees = array_column(config('wascal.committees'), 'name');
-        if (count($committeeRank) < 1 || array_diff($committeeRank, $committees)) {
-            $errors[] = 'Comité souhaité invalide.';
-        }
-
         $floor = isset($b['floor']) ? (string) $b['floor'] : null;
         if ($floor && ! in_array($floor, config('wascal.floors'), true)) {
             $errors[] = 'Étage invalide.';
@@ -65,7 +59,6 @@ class SurveyController extends Controller
             'full_name' => $fullName,
             'delegation' => $delegation,
             'floor' => $floor,
-            'committee_rank' => $committeeRank,
             'activities' => array_map('strval', is_array($b['activities'] ?? null) ? $b['activities'] : []),
             'proposed_activities' => $proposed,
             'talents' => array_map('strval', is_array($b['talents'] ?? null) ? $b['talents'] : []),

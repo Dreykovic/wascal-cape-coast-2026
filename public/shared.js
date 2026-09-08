@@ -1,5 +1,5 @@
 // Données + utilitaires partagés (module ES natif, importé par chaque page).
-// Source de vérité : délégations, comités, couleurs, drapeaux, RNG seedé.
+// Source de vérité : délégations, étiquettes d'activité, couleurs, drapeaux.
 
 export const DELEGATIONS = [
   "Bénin", "Burkina Faso", "Côte d'Ivoire", "Guinée",
@@ -35,16 +35,8 @@ export function flagSVG(country, w = 30) {
   return `<svg class="flag" viewBox="0 0 48 32" width="${w}" height="${h}" role="img" aria-label="${country}">${FLAGS[country] || ""}</svg>`;
 }
 
-// Comités (un par affiche) + couleur (CCOLOR historique) + emoji.
-export const COMMITTEES = [
-  { name: "Sorties & Excursions", color: "#0e8c7a", emoji: "🌳", tag: "Destinations, transport, comptes" },
-  { name: "Soirées & Jeux",       color: "#8a2d5d", emoji: "🎉", tag: "Films, musique, karaoké, jeux" },
-  { name: "Sport & Bien-être",    color: "#1c7a45", emoji: "⚽", tag: "Footing, foot, volley, tournois" },
-  { name: "Culture & Échanges",   color: "#e85d1b", emoji: "🎭", tag: "Soirées-pays, rencontres ghanéennes" },
-];
-
-// Propriétaires de galerie : 4 comités + Club d'anglais. La clé (slug) doit rester
-// alignée avec GALLERY_OWNERS dans server.js. Chacun gère sa propre galerie via /comite.
+// Étiquettes d'activité : catégorisent les albums de la galerie et les étapes du parcours.
+// La clé (slug) doit rester alignée avec config('wascal.gallery_owners') côté serveur.
 export const GALLERY_OWNERS = [
   { key: "club",    name: "Club d'anglais",       color: "#f2a900", emoji: "📣" },
   { key: "sorties", name: "Sorties & Excursions", color: "#0e8c7a", emoji: "🌳" },
@@ -66,25 +58,6 @@ export const TALENTS = [
   "Photo / vidéo", "Animation / présentation", "Organisation / logistique",
   "Dessin / déco", "Langues locales",
 ];
-
-// RNG seedé (mulberry32) — re-tirages reproductibles côté admin.
-export function rng(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0; a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-export function shuffle(list, rand) {
-  const a = list.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 export const norm = (s) => String(s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 export const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

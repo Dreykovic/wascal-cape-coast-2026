@@ -3,9 +3,9 @@
 Boîte à outils pour le programme **WASCAL Cape Coast 2026** : 32 étudiants et étudiantes,
 8 délégations francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana.
 
-Trois piliers : **programme des cours**, **rappels**, **activités** (répartition en comités,
-galerie photo décentralisée). Il n'y a pas de fonctionnalité « devoirs / homework » — hors
-périmètre du projet.
+Trois piliers : **programme des cours**, **rappels**, **activités**. Le site est le carnet de bord
+du séjour, porté par le **Club d'anglais** : chronologie du parcours (`/parcours`) et galerie photo
+des activités vécues. Il n'y a pas de fonctionnalité « devoirs / homework » — hors périmètre du projet.
 
 Ce dépôt est le portage Laravel d'une app Node/Fastify d'origine, désormais archivée dans
 [`archive/files/`](archive/files), réécrit pour tourner sur un **hébergement mutualisé**
@@ -16,11 +16,11 @@ Ce dépôt est le portage Laravel d'une app Node/Fastify d'origine, désormais a
 - **Back** : Laravel 13 / PHP 8.2+, base MySQL en production, SQLite en développement.
 - **Front** : HTML/CSS/JS vanilla, **aucun bundler, aucune étape de build**. Les pages
   (`resources/pages/*.html`) sont servies statiquement, pas en Blade.
-- Les URL d'API sont identiques à l'app Node d'origine (`/api/responses`, `/api/gallery`,
-  `/api/admin/*`, `/api/comite/*`) : le front fonctionne sans modification.
+- Les URL d'API reprennent celles de l'app Node d'origine pour ce qui subsiste (`/api/responses`,
+  `/api/gallery`, `/api/admin/*`) ; `/api/journey-stages` et `/parcours` sont propres à ce portage.
 
-Le détail de l'architecture, des conventions et du cœur fonctionnel (galerie décentralisée +
-comités) est documenté dans [`CLAUDE.md`](CLAUDE.md).
+Le détail de l'architecture, des conventions et du cœur fonctionnel (parcours + galerie) est
+documenté dans [`CLAUDE.md`](CLAUDE.md).
 
 ## Démarrage rapide
 

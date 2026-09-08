@@ -130,7 +130,7 @@ par défaut peut être trop bas. hPanel → *Configuration PHP → Options* : me
 
 ```bash
 cd ~/wascal-laravel
-php artisan migrate --force --seed     # crée les tables + sème les 5 albums de galerie
+php artisan migrate --force --seed     # crée les tables + sème les 5 albums de galerie + les étapes
 php artisan config:cache               # met la config en cache (perf)
 php artisan route:cache
 ```
@@ -147,9 +147,9 @@ php artisan route:cache
 
 1. Ouvre `https://ton-domaine.example/` → le site s'affiche, la galerie se charge.
 2. `/survey` → remplis et envoie une réponse test.
-3. `/admin` → connecte-toi avec `ADMIN_PASSWORD` → tu vois la répartition, l'export CSV, le PDF.
-4. Dans `/admin`, **génère les codes** des comités (bouton par comité) et transmets-les.
-5. Chaque comité va sur `/comite`, choisit son nom, saisit son code → gère **sa** galerie.
+3. `/parcours` → les étapes semées par défaut s'affichent.
+4. `/admin` → connecte-toi avec `ADMIN_PASSWORD` → tu vois les réponses, l'export CSV, les étapes du
+   parcours et la galerie. Édite les étapes (titre, dates réelles, texte) au fil du séjour.
 
 ---
 

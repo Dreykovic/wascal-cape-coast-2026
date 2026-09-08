@@ -15,12 +15,6 @@
   .nav-btns{display:flex;justify-content:space-between;gap:12px;margin-top:8px;}
   .nav-btns .btn{flex:0 0 auto;}
   .nav-btns .grow{flex:1 1 auto;justify-content:center;}
-  /* comité : grande puce pleine largeur */
-  .comm{display:grid;gap:10px;}
-  .comm .chip{width:100%;padding:14px 16px;border-radius:14px;align-items:flex-start;}
-  .comm .chip .e{font-size:24px;line-height:1;}
-  .comm .chip .ctxt{display:flex;flex-direction:column;gap:1px;}
-  .comm .chip[aria-checked=true]{background:var(--cream2);box-shadow:4px 4px 0 var(--ink);}
   /* idées proposées */
   .proprow{display:flex;gap:8px;align-items:stretch;}
   .proprow .btn{flex:0 0 auto;}
@@ -43,8 +37,8 @@
 </nav>
 
 <main class="sheet">
-  <div class="steps" id="steps" role="progressbar" aria-label="Progression du sondage" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
-    <div class="s on"></div><div class="s"></div><div class="s"></div><div class="s"></div>
+  <div class="steps" id="steps" role="progressbar" aria-label="Progression du sondage" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+    <div class="s on"></div><div class="s"></div><div class="s"></div>
   </div>
   <div id="err" class="alert alert-err hide" role="alert" style="margin-bottom:14px"></div>
 
@@ -69,19 +63,10 @@
       <div class="nav-btns"><span></span><button class="btn btn-primary grow" data-next>Continuer →</button></div>
     </section>
 
-    <!-- Étape 2 — Comité -->
-    <section class="step hide" data-step="1" aria-labelledby="h1">
-      <h2 id="h1" tabindex="-1">🧩 Ton comité</h2>
-      <p class="sub">Étape 2 sur 4 · Où veux-tu t'investir en priorité ?</p>
-      <div class="comm" id="committees" role="radiogroup" aria-label="Comité souhaité"></div>
-      <p class="muted" style="font-size:13px;margin-top:12px">Tout le monde tournera sur les 4 comités au fil des mois — ici, indique ton point de départ préféré.</p>
-      <div class="nav-btns"><button class="btn" data-prev>← Retour</button><button class="btn btn-primary grow" data-next>Continuer →</button></div>
-    </section>
-
-    <!-- Étape 3 — Activités & talents -->
-    <section class="step hide" data-step="2" aria-labelledby="h2b">
+    <!-- Étape 2 — Activités & talents -->
+    <section class="step hide" data-step="1" aria-labelledby="h2b">
       <h2 id="h2b" tabindex="-1">✨ Les activités & tes talents</h2>
-      <p class="sub">Étape 3 sur 4 · Coche celles qui te tentent — et propose les tiennes !</p>
+      <p class="sub">Étape 2 sur 3 · Coche celles qui te tentent — et propose les tiennes !</p>
       <div class="field">
         <span class="fld" id="lbl-act">Les activités qu'on devrait faire ensemble</span>
         <div class="chips" id="activities" role="group" aria-labelledby="lbl-act"></div>
@@ -102,10 +87,10 @@
       <div class="nav-btns"><button class="btn" data-prev>← Retour</button><button class="btn btn-primary grow" data-next>Continuer →</button></div>
     </section>
 
-    <!-- Étape 4 — Pratique -->
-    <section class="step hide" data-step="3" aria-labelledby="h3">
+    <!-- Étape 3 — Pratique -->
+    <section class="step hide" data-step="2" aria-labelledby="h3">
       <h2 id="h3" tabindex="-1">🎯 Derniers détails</h2>
-      <p class="sub">Étape 4 sur 4 · Pour bien t'accompagner</p>
+      <p class="sub">Étape 3 sur 3 · Pour bien t'accompagner</p>
       <div class="field">
         <span class="fld" id="lbl-lvl">Ton niveau d'anglais (auto-évaluation)</span>
         <div class="chips" id="levels" role="radiogroup" aria-labelledby="lbl-lvl"></div>
@@ -125,7 +110,7 @@
     <section class="step hide done" data-step="done" aria-labelledby="hdone">
       <div class="big" aria-hidden="true">🎉</div>
       <h2 id="hdone" tabindex="-1">Merci, c'est enregistré !</h2>
-      <p class="sub" style="color:var(--ink)">Ta réponse nous aide à former des comités équilibrés. À très vite pour l'aventure !</p>
+      <p class="sub" style="color:var(--ink)">Ta réponse nous aide à bien organiser le séjour. À très vite pour l'aventure !</p>
       <a class="btn btn-primary" href="/">Retour à l'accueil</a>
     </section>
 
@@ -134,10 +119,10 @@
 </main>
 
 <script type="module">
-import { DELEGATIONS, FLOORS, COMMITTEES, ACTIVITIES, TALENTS, ENGLISH_LEVELS, flagSVG, esc } from "/shared.js";
+import { DELEGATIONS, FLOORS, ACTIVITIES, TALENTS, ENGLISH_LEVELS, flagSVG, esc } from "/shared.js";
 
 const DONE_KEY = "wascal_survey_done";
-const state = { full_name:"", delegation:"", floor:"", committee:"", activities:new Set(), proposed:[], talents:new Set(), english_level:"", dietary:"", notes:"" };
+const state = { full_name:"", delegation:"", floor:"", activities:new Set(), proposed:[], talents:new Set(), english_level:"", dietary:"", notes:"" };
 let step = 0;
 
 const errBox = document.getElementById("err");
@@ -157,11 +142,6 @@ fill("floors", FLOORS, "radio", false);
 fill("levels", ENGLISH_LEVELS, "radio", false);
 fill("activities", ACTIVITIES, "checkbox", false);
 fill("talents", TALENTS, "checkbox", false);
-document.getElementById("committees").innerHTML = COMMITTEES.map(c =>
-  `<button type="button" class="chip" role="radio" aria-checked="false" data-val="${esc(c.name)}" style="border-color:${c.color}">
-     <span class="e" aria-hidden="true">${c.emoji}</span>
-     <span class="ctxt"><b>${esc(c.name)}</b><span class="muted" style="font-weight:700;font-size:13px">${esc(c.tag)}</span></span>
-   </button>`).join("");
 
 function single(id, set){
   const box=document.getElementById(id);
@@ -182,7 +162,6 @@ function multi(id, theSet){
 single("delegations",(v)=>state.delegation=v);
 single("floors",(v)=>state.floor=v);
 single("levels",(v)=>state.english_level=v);
-single("committees",(v)=>state.committee=v);
 multi("activities",state.activities);
 multi("talents",state.talents);
 
@@ -225,8 +204,7 @@ function validate(s){
     if(!state.delegation) return {msg:"Choisis ta délégation.",focus:"delegations"};
     if(!state.floor) return {msg:"Choisis ton logement.",focus:"floors"};
   }
-  if(s===1 && !state.committee) return {msg:"Choisis un comité.",focus:"committees"};
-  if(s===3 && !state.english_level) return {msg:"Indique ton niveau d'anglais.",focus:"levels"};
+  if(s===2 && !state.english_level) return {msg:"Indique ton niveau d'anglais.",focus:"levels"};
   return null;
 }
 
@@ -241,11 +219,10 @@ document.getElementById("cardbox").addEventListener("click",(e)=>{
 
 // --- Envoi ------------------------------------------------------------------
 document.getElementById("submitBtn").addEventListener("click", async ()=>{
-  const err=validate(3); if(err){ showErr(err.msg); firstInvalidFocus(err.focus); return; }
+  const err=validate(2); if(err){ showErr(err.msg); firstInvalidFocus(err.focus); return; }
   const btn=document.getElementById("submitBtn"); btn.disabled=true; btn.textContent="Envoi…";
   const payload={
     full_name:state.full_name.trim(), delegation:state.delegation, floor:state.floor,
-    committee_rank:[state.committee],
     activities:[...state.activities], proposed_activities:[...state.proposed], talents:[...state.talents],
     english_level:state.english_level, dietary:state.dietary.trim(), notes:state.notes.trim(),
   };

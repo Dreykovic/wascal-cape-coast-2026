@@ -15,52 +15,20 @@
   .stat{background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:10px 16px;}
   .stat b{font-family:'Fraunces',serif;font-size:26px;display:block;line-height:1;}
   .stat span{font-size:12px;font-weight:700;color:var(--muted);}
-  .commcol{color:#fff;border:3px solid var(--ink);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
-  .commcol .h{padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-  .commcol .h h3{margin:0;font-size:18px;}
-  .commcol .body{background:var(--paper);color:var(--ink);padding:8px;}
-  .cbadge{background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:30px;padding:3px 11px;font-family:'Fraunces',serif;font-weight:900;font-size:15px;white-space:nowrap;}
-  .cbadge small{font-weight:700;font-size:11px;color:var(--muted);}
-  .cbadge.over{background:#fcdcc7;} .cbadge.under{background:#dfe8fb;} .cbadge.ok{background:#dcf3e4;}
-  .mem{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 9px;border-bottom:1.5px dashed var(--cream2);font-size:14px;}
-  .mem:last-child{border-bottom:0;}
-  .mem .nm{flex:1 1 120px;min-width:0;font-weight:700;}
-  .mem .from{display:inline-block;font-size:11px;font-weight:800;color:var(--amber);background:#fff;border:1.5px solid var(--amber);border-radius:20px;padding:1px 8px;margin-left:6px;white-space:nowrap;}
   .movesel{font:inherit;font-size:12.5px;font-weight:700;padding:6px 8px;border:2px solid var(--ink);border-radius:9px;background:#fff;color:var(--ink);max-width:100%;}
-  .empty{color:var(--muted);padding:8px 9px;font-weight:700;}
   .login{max-width:380px;margin:60px auto;}
-  table.rot{width:100%;border-collapse:collapse;background:#fff;border:3px solid var(--ink);border-radius:var(--radius);overflow:hidden;}
-  table.rot th,table.rot td{padding:10px;border:1.5px solid var(--cream2);text-align:center;font-size:13px;font-weight:700;}
-  table.rot th{background:var(--ink);color:#fff;font-family:'Fraunces',serif;}
-  table.rot td.g{background:var(--cream);font-weight:800;}
   .pill{display:inline-block;padding:3px 9px;border-radius:20px;color:#fff;font-size:12px;font-weight:800;}
   details.raw{margin-top:26px;} details.raw summary{cursor:pointer;font-weight:800;}
   .rawtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
   .rawtable th,.rawtable td{border:1px solid var(--cream2);padding:5px 7px;text-align:left;vertical-align:top;white-space:nowrap;}
   .rawtable th{background:var(--ink);color:#fff;}
   .hint{background:var(--cream);border:2px solid var(--ink);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:600;margin:0 0 16px;}
-  /* --- Vue imprimable « répartition » : sobre, noir sur blanc, une page A4 par comité --- */
-  #printArea{display:none;}
-  .ppage{box-sizing:border-box;color:#000;background:#fff;font-family:'Hanken Grotesk',Arial,sans-serif;}
-  .phead{border-bottom:2px solid #000;padding-bottom:6px;}
-  .phead h2{font-weight:700;font-size:20pt;color:#000;margin:0;}
-  .pcount{color:#000;font-weight:600;font-size:11pt;margin:6px 0 14px;}
-  .pmem{display:flex;gap:8px;align-items:baseline;padding:6px 2px;border-bottom:1px solid #ccc;font-size:12.5pt;}
-  .pmem .num{font-weight:700;min-width:24px;}
-  .pmem .nm{font-weight:600;}
-  .pmem .dg{color:#000;}
-  .pmem .moved{margin-left:auto;font-weight:600;font-size:10pt;white-space:nowrap;}
-  .pempty{font-style:italic;padding:8px 2px;}
-  .pfoot{margin-top:18px;font-size:9pt;color:#000;border-top:1px solid #000;padding-top:6px;}
-  @media print{
-    @page{size:A4 portrait;margin:16mm;}
-    html,body{background:#fff;}
-    body>*:not(#printArea){display:none !important;}
-    #printArea{display:block;}
-    .ppage{page-break-after:always;}
-    .ppage:last-child{page-break-after:auto;}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  }
+  /* --- Étapes du parcours --- */
+  .stagecard{border-left:10px solid var(--muted);}
+  .stagecard .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+  .stageorder{display:flex;flex-direction:column;gap:4px;}
+  .stageorder button{width:30px;height:26px;border:2px solid var(--ink);border-radius:7px;background:#fff;cursor:pointer;font-weight:900;line-height:1;padding:0;}
+  .stageorder button:disabled{opacity:.3;cursor:default;}
 </style>
 </head>
 <body>
@@ -74,7 +42,7 @@
 <div class="wrap login" id="loginView">
   <div class="card">
     <h2 style="margin-top:0">🔒 Accès réservé</h2>
-    <p class="muted">Espace de répartition des comités. Réservé à l'organisation.</p>
+    <p class="muted">Gestion du carnet de bord (parcours, galerie, réponses). Réservé à l'organisation.</p>
     <div class="field">
       <label class="fld" for="pwd">Mot de passe</label>
       <input type="password" id="pwd" autocomplete="current-password">
@@ -88,29 +56,26 @@
 <div class="wrap hide" id="appView">
   <div class="bar">
     <div>
-      <h2 style="margin:0">Répartition des comités</h2>
+      <h2 style="margin:0">Gestion du carnet</h2>
       <span class="muted" id="subtitle"></span>
     </div>
     <div class="tools">
-      <button class="btn btn-primary" id="printBtn">🖨️ Répartition (PDF)</button>
-      <a class="btn btn-ink" id="csvBtn" href="/api/admin/export.csv">⬇ Export CSV</a>
+      <a class="btn btn-ink" id="csvBtn" href="/api/admin/export.csv">⬇ Export CSV des réponses</a>
     </div>
   </div>
 
   <div class="stat-row" id="stats"></div>
-  <p class="hint">Les comités reflètent les <b>choix du sondage</b>. Aucune réaffectation automatique : pour équilibrer, change le comité d'une personne dans son menu déroulant — <b>c'est sauvegardé</b> et tu peux le refaire plus tard. Le badge <span class="from" style="color:var(--amber)">↩ …</span> indique le comité initialement demandé.</p>
-  <div class="grid cols-4" id="committees"></div>
-  <div id="unassigned"></div>
 
-  <h2 style="margin:30px 0 8px">💡 Activités proposées par le groupe</h2>
+  <h2 style="margin:30px 0 8px">🧭 Étapes du séjour</h2>
+  <p class="hint">Le carnet de bord du séjour, affiché sur <a href="/parcours" target="_blank">/parcours</a>. Écris chaque étape au passé, une fois vécue — titre, dates réelles, quelques phrases, étiquette de couleur. L'ordre ci-dessous est l'ordre affiché sur la page (flèches pour réordonner).</p>
+  <div id="stages"></div>
+  <button class="btn btn-primary" id="addStageBtn" style="margin-top:4px">＋ Nouvelle étape</button>
+
+  <h2 style="margin:34px 0 8px">💡 Activités proposées par le groupe</h2>
   <p class="muted" style="margin-top:0">Idées libres saisies dans le sondage, des plus demandées aux plus rares.</p>
   <div class="chips" id="proposedIdeas"></div>
 
-  <h2 style="margin:30px 0 8px">🔄 Rotation sur 4 mois</h2>
-  <p class="muted" style="margin-top:0">Chaque comité garde ses membres et tourne sur les 4 rôles.</p>
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="rot" id="rotation" style="min-width:520px"></table></div>
-
-  <h2 style="margin:30px 0 8px">🖼️ Galerie du site</h2>
+  <h2 style="margin:34px 0 8px">🖼️ Galerie du site</h2>
   <p class="muted" style="margin-top:0">Crée des albums, téléverse des photos (redimensionnées automatiquement à l'envoi) et colle les liens Google Drive. Tout s'affiche aussitôt sur la page d'accueil.</p>
 
   <div class="card" style="margin-bottom:16px">
@@ -124,27 +89,19 @@
   <div id="albums"></div>
   <button class="btn btn-primary" id="addAlbumBtn" style="margin-top:4px">＋ Nouvel album</button>
 
-  <h2 style="margin:34px 0 8px">🔑 Accès des comités à leur galerie</h2>
-  <p class="muted" style="margin-top:0">Chaque comité (et le Club d'anglais) gère <strong>sa propre galerie</strong> sur <a href="/comite" target="_blank">/comite</a> avec un code partagé. Génère un code, copie-le et transmets-le aux responsables. Le code n'est affiché qu'une seule fois ; régénère-le si besoin (l'ancien cesse aussitôt de fonctionner).</p>
-  <div id="codes"></div>
-
-  <details class="raw">
-    <summary>Voir les réponses brutes (<span id="rawcount">0</span>)</summary>
+  <details class="raw" style="margin-top:34px">
+    <summary>Voir les réponses au sondage (<span id="rawcount">0</span>)</summary>
     <div style="overflow:auto"><table class="rawtable" id="rawtable"></table></div>
   </details>
 </div>
 
-<!-- Vue imprimable de la répartition : une page A4 par comité (cachée à l'écran) -->
-<div id="printArea"></div>
-
 <div class="kente" style="margin-top:40px"></div>
 
 <script type="module">
-import { COMMITTEES, GALLERY_OWNERS, flagSVG, esc, norm } from "/shared.js";
+import { GALLERY_OWNERS, esc, norm } from "/shared.js";
 
-const NAMES = COMMITTEES.map(c=>c.name);
-const commOf = (name)=>COMMITTEES.find(c=>c.name===name);
 let responses = [];
+let stages = [];
 
 // --- Auth -------------------------------------------------------------------
 async function checkAuth(){
@@ -167,11 +124,13 @@ async function enterApp(){
   document.getElementById("loginView").classList.add("hide");
   document.getElementById("appView").classList.remove("hide");
   document.getElementById("logoutBtn").classList.remove("hide");
-  await loadData(); render();
+  await loadData();
+  await loadStages();
   await loadGallery();
+  render();
 }
 
-// --- Données + dédup --------------------------------------------------------
+// --- Réponses au sondage (lecture seule ici, dédupliquées à l'affichage) ----
 async function loadData(){
   const r=await fetch("/api/admin/responses"); const d=await r.json();
   const all = d.responses || []; // déjà triées récentes → anciennes
@@ -183,103 +142,12 @@ async function loadData(){
   responses = dedup;
 }
 
-// --- Répartition (selon les choix, sans réaffectation auto) ------------------
-const requestedOf = (p)=>(p.committee_rank||[])[0] || null;
-function effectiveOf(p){
-  const a=p.assigned_committee;
-  if(a && NAMES.includes(a)) return a;          // déplacement manuel de l'admin
-  const req=requestedOf(p);
-  return NAMES.includes(req) ? req : null;       // sinon : comité demandé
-}
-function groupAll(){
-  const groups=NAMES.map(()=>[]); const unassigned=[];
-  for(const p of responses){
-    const eff=effectiveOf(p);
-    if(eff===null) unassigned.push(p); else groups[NAMES.indexOf(eff)].push(p);
-  }
-  return {groups, unassigned};
-}
-
-// --- Déplacement (persisté) -------------------------------------------------
-async function assign(id, committee){
-  const r=await fetch("/api/admin/assign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id, committee})});
-  return r.ok;
-}
-async function onMove(sel){
-  const id=Number(sel.dataset.id);
-  const p=responses.find(x=>x.id===id); if(!p) return;
-  const choice=sel.value;
-  // Si le choix = comité demandé, on réinitialise (pas d'override) ; sinon on fixe.
-  const committee = (choice===requestedOf(p)) ? "" : choice;
-  sel.disabled=true;
-  const ok=await assign(id, committee);
-  sel.disabled=false;
-  if(ok){ p.assigned_committee = committee===""?null:committee; render(); }
-  else { alert("Échec de l'enregistrement du déplacement."); }
-}
-
-// --- Rendu d'un membre ------------------------------------------------------
-function memberRow(p){
-  const eff=effectiveOf(p), req=requestedOf(p);
-  const moved = eff && req && eff!==req;
-  const reqC = commOf(req);
-  const sel = `<select class="movesel" data-id="${p.id}" aria-label="Comité de ${esc(p.full_name)}">`+
-    COMMITTEES.map(c=>`<option value="${esc(c.name)}" ${c.name===eff?"selected":""}>${c.emoji} ${esc(c.name)}</option>`).join("")+
-    (eff===null?'<option value="" selected>— à placer —</option>':'')+
-    `</select>`;
-  const from = moved ? `<span class="from" title="Comité demandé dans le sondage">↩ demandé : ${reqC?reqC.emoji:""} ${esc(req)}</span>` : "";
-  return `<div class="mem">${flagSVG(p.delegation,22)}<span class="nm">${esc(p.full_name)}${from}</span>${sel}</div>`;
-}
-const sortMembers = (a,b)=>a.delegation.localeCompare(b.delegation)||a.full_name.localeCompare(b.full_name);
-
-// --- Rendu global -----------------------------------------------------------
 function render(){
-  const {groups, unassigned}=groupAll();
   const n=responses.length;
-  const base=Math.floor(n/4), rem=n%4;
-  const target=NAMES.map((_,i)=>base+(i<rem?1:0));
-
-  document.getElementById("subtitle").textContent=`${n} réponse(s) · cible ≈ ${Math.floor(n/4)}–${Math.ceil(n/4)} par comité`;
-
-  const moved = responses.filter(p=>{const e=effectiveOf(p),r=requestedOf(p);return e&&r&&e!==r;}).length;
-  const sizes = groups.map(g=>g.length);
-  const spread = sizes.length?`${Math.min(...sizes)}–${Math.max(...sizes)}`:"0";
+  document.getElementById("subtitle").textContent=`${n} réponse(s) au sondage · ${stages.length} étape(s) du parcours`;
   document.getElementById("stats").innerHTML=`
-    <div class="stat"><b>${n}</b><span>réponses (dédupliquées)</span></div>
-    <div class="stat"><b>${moved}</b><span>déplacé·e·s manuellement</span></div>
-    <div class="stat"><b>${spread}</b><span>taille min–max des comités</span></div>`;
-
-  // Colonnes par comité (effectif vs cible)
-  document.getElementById("committees").innerHTML = COMMITTEES.map((c,i)=>{
-    const members=groups[i].slice().sort(sortMembers);
-    const diff=members.length-target[i];
-    const cls=diff>0?"over":diff<0?"under":"ok";
-    const arrow=diff>0?`▲ +${diff}`:diff<0?`▼ ${diff}`:"✓";
-    return `<div class="commcol">
-      <div class="h" style="background:${c.color}"><h3>${c.emoji} ${esc(c.name)}</h3>
-        <span class="cbadge ${cls}">${members.length}<small>/${target[i]} ${arrow}</small></span></div>
-      <div class="body">${members.map(memberRow).join("")||'<div class="empty">— personne —</div>'}</div>
-    </div>`;
-  }).join("");
-
-  // À placer (cas rare : ni demandé ni assigné valide)
-  const uBox=document.getElementById("unassigned");
-  uBox.innerHTML = unassigned.length ? `<div class="commcol" style="margin-top:16px">
-      <div class="h" style="background:var(--ink)"><h3>📥 À placer</h3><span class="cbadge">${unassigned.length}</span></div>
-      <div class="body">${unassigned.slice().sort(sortMembers).map(memberRow).join("")}</div></div>` : "";
-
-  // Rotation : comité g, mois m → rôle (g+m)%4
-  let head=`<tr><th>Comité de départ</th>${[1,2,3,4].map(m=>`<th>Mois ${m}</th>`).join("")}</tr>`;
-  let rows="";
-  for(let g=0;g<4;g++){
-    rows+=`<tr><td class="g">${COMMITTEES[g].emoji} ${esc(COMMITTEES[g].name)}<br><span class="muted" style="font-weight:700;font-size:11px">${groups[g].length} pers.</span></td>`;
-    for(let m=0;m<4;m++){
-      const c=COMMITTEES[(g+m)%4];
-      rows+=`<td><span class="pill" style="background:${c.color}">${c.emoji} ${esc(c.name)}</span></td>`;
-    }
-    rows+="</tr>";
-  }
-  document.getElementById("rotation").innerHTML=head+rows;
+    <div class="stat"><b>${n}</b><span>réponses au sondage</span></div>
+    <div class="stat"><b>${stages.length}</b><span>étapes du parcours</span></div>`;
 
   // Idées proposées (agrégées, triées par fréquence)
   const ideaCount=new Map();
@@ -294,17 +162,97 @@ function render(){
 
   // Réponses brutes
   document.getElementById("rawcount").textContent=n;
-  const cols=["full_name","delegation","floor","committee_rank","assigned_committee","activities","proposed_activities","talents","english_level","dietary","notes"];
-  const lbl={full_name:"Nom",delegation:"Délégation",floor:"Logement",committee_rank:"Comité demandé",assigned_committee:"Comité assigné",activities:"Activités",proposed_activities:"Idées proposées",talents:"Talents",english_level:"Anglais",dietary:"Régime",notes:"Notes"};
+  const cols=["full_name","delegation","floor","activities","proposed_activities","talents","english_level","dietary","notes"];
+  const lbl={full_name:"Nom",delegation:"Délégation",floor:"Logement",activities:"Activités",proposed_activities:"Idées proposées",talents:"Talents",english_level:"Anglais",dietary:"Régime",notes:"Notes"};
   document.getElementById("rawtable").innerHTML=
     `<tr>${cols.map(c=>`<th>${lbl[c]}</th>`).join("")}</tr>`+
     responses.map(p=>`<tr>${cols.map(c=>{const v=p[c];return `<td>${esc(Array.isArray(v)?v.join(", "):(v??""))}</td>`;}).join("")}</tr>`).join("");
 }
 
-// Déplacement via les menus (délégation d'événement)
-document.getElementById("appView").addEventListener("change",(e)=>{
-  const sel=e.target.closest(".movesel:not(.galcolor)"); if(sel) onMove(sel);
+// --- Étapes du parcours ------------------------------------------------------
+function tagSelect(value){
+  return `<select class="movesel stagetag" aria-label="Étiquette d'activité">`+
+    `<option value="" ${!value?"selected":""}>— aucune —</option>`+
+    GALLERY_OWNERS.map(o=>`<option value="${o.key}" ${o.key===value?"selected":""}>${o.emoji} ${esc(o.name)}</option>`).join("")+
+    `</select>`;
+}
+
+async function loadStages(){
+  const r=await fetch("/api/journey-stages"); const d=await r.json().catch(()=>({}));
+  stages = d.stages || [];
+  renderStages();
+}
+
+function renderStages(){
+  const box=document.getElementById("stages");
+  box.innerHTML = stages.map((s,i)=>`
+    <div class="card stagecard" data-id="${s.id}" style="margin-bottom:14px;${s.tagColor?`border-left-color:${esc(s.tagColor)}`:""}">
+      <div class="row">
+        <div class="stageorder">
+          <button type="button" class="stageup" ${i===0?"disabled":""} title="Monter" aria-label="Monter l'étape">↑</button>
+          <button type="button" class="stagedown" ${i===stages.length-1?"disabled":""} title="Descendre" aria-label="Descendre l'étape">↓</button>
+        </div>
+        <div style="flex:2 1 220px"><label class="fld">Titre</label>
+          <input type="text" class="stagetitle" value="${esc(s.title)}"></div>
+        <div style="flex:0 0 190px"><label class="fld">Étiquette</label>${tagSelect(s.tag)}</div>
+        <div style="flex:0 0 160px"><label class="fld">Dates</label>
+          <input type="text" class="stagedate" value="${esc(s.date_label||"")}" placeholder="Ex. Semaine 3"></div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label class="fld">Texte (au passé, une fois vécu)</label>
+        <textarea class="stagebody" rows="2">${esc(s.body||"")}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ink stagesave">💾 Enregistrer</button>
+        <button class="btn btn-ghost stagedelete" style="color:var(--red)">🗑 Supprimer</button>
+        <span class="muted stagestatus"></span>
+      </div>
+    </div>`).join("") || '<p class="muted">Aucune étape. Clique sur « Nouvelle étape ».</p>';
+}
+
+const stageCardEl=(node)=>node.closest(".stagecard");
+function stageStatus(node,msg){ const s=stageCardEl(node).querySelector(".stagestatus"); s.textContent=msg||""; }
+
+document.getElementById("stages").addEventListener("click", async (e)=>{
+  const save=e.target.closest(".stagesave"); if(save) return saveStage(save);
+  const del=e.target.closest(".stagedelete"); if(del) return deleteStage(del);
+  const up=e.target.closest(".stageup"); if(up) return moveStage(up,-1);
+  const down=e.target.closest(".stagedown"); if(down) return moveStage(down,1);
 });
+document.getElementById("addStageBtn").addEventListener("click", addStage);
+
+async function saveStage(btn){
+  const el=stageCardEl(btn), id=Number(el.dataset.id);
+  const title=el.querySelector(".stagetitle").value;
+  const tag=el.querySelector(".stagetag").value;
+  const date_label=el.querySelector(".stagedate").value;
+  const body=el.querySelector(".stagebody").value;
+  stageStatus(btn,"Enregistrement…");
+  const r=await fetch(`/api/admin/journey-stages/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,tag,date_label,body})});
+  if(r.ok){ stageStatus(btn,"✓ enregistré"); setTimeout(()=>stageStatus(btn,""),1500); await loadStages(); render(); }
+  else { const d=await r.json().catch(()=>({})); stageStatus(btn,"⚠ "+(d.error||"échec")); }
+}
+
+async function addStage(){
+  const r=await fetch("/api/admin/journey-stages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:"Nouvelle étape",tag:"",date_label:"",body:""})});
+  if(r.ok){ await loadStages(); render(); }
+}
+
+async function deleteStage(btn){
+  const id=Number(stageCardEl(btn).dataset.id);
+  if(!confirm("Supprimer cette étape du parcours ?")) return;
+  const r=await fetch(`/api/admin/journey-stages/${id}`,{method:"DELETE"});
+  if(r.ok){ await loadStages(); render(); }
+}
+
+async function moveStage(btn, dir){
+  const el=stageCardEl(btn), id=Number(el.dataset.id);
+  const i=stages.findIndex(s=>s.id===id); const j=i+dir;
+  if(j<0||j>=stages.length) return;
+  [stages[i],stages[j]]=[stages[j],stages[i]];
+  renderStages();
+  await fetch("/api/admin/journey-stages/reorder",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:stages.map(s=>s.id)})});
+}
 
 // --- Galerie du site --------------------------------------------------------
 const COLOR_CHOICES = [
@@ -312,16 +260,14 @@ const COLOR_CHOICES = [
   {name:"Ambre",v:"#e85d1b"},{name:"Or",   v:"#f2a900"},{name:"Rouge",v:"#c5302b"},
   {name:"Bleu", v:"#1e3f8f"},{name:"Encre",v:"#231a10"},
 ];
-let gallery = { albums: [], drive_all: "", owners: [], codes: [] };
-const ownerName = (key)=>(gallery.owners.find(o=>o.key===key)||{}).name || "";
+let gallery = { albums: [], drive_all: "", owners: [] };
 
 async function loadGallery(){
   const r = await fetch("/api/gallery/manage"); const d = await r.json();
   gallery.albums = d.albums || []; gallery.drive_all = d.drive_all || "";
-  gallery.owners = d.owners || GALLERY_OWNERS; gallery.codes = d.codes || [];
+  gallery.owners = d.owners || GALLERY_OWNERS;
   document.getElementById("driveAll").value = gallery.drive_all;
   renderGallery();
-  renderCodes();
 }
 
 function colorSelect(value){
@@ -331,63 +277,10 @@ function colorSelect(value){
 }
 
 function ownerSelect(value){
-  return `<select class="movesel galowner" aria-label="Comité propriétaire">`+
-    `<option value="" ${!value?"selected":""}>— aucun —</option>`+
+  return `<select class="movesel galowner" aria-label="Étiquette de l'album">`+
+    `<option value="" ${!value?"selected":""}>— aucune —</option>`+
     gallery.owners.map(o=>`<option value="${o.key}" ${o.key===value?"selected":""}>${o.emoji} ${esc(o.name)}</option>`).join("")+
     `</select>`;
-}
-
-// --- Codes d'accès des comités ----------------------------------------------
-function renderCodes(){
-  const box=document.getElementById("codes");
-  const byOwner=Object.fromEntries(gallery.codes.map(c=>[c.owner,c]));
-  box.innerHTML = gallery.owners.map(o=>{
-    const c=byOwner[o.key]||{set:false};
-    const état = c.set
-      ? `<span class="pill" style="background:var(--green);color:#fff">code actif</span>`
-      : `<span class="pill" style="background:#e7d9bd;color:var(--ink)">aucun code</span>`;
-    return `<div class="card galcode" data-owner="${o.key}" style="margin-bottom:10px;border-left:10px solid ${o.color};display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <strong style="flex:1 1 200px">${o.emoji} ${esc(o.name)}</strong>
-      ${état}
-      <span class="codeshow muted" style="font-family:monospace;font-size:16px;letter-spacing:2px"></span>
-      <button class="btn btn-ink codegen">${c.set?"↻ Régénérer":"＋ Générer"} le code</button>
-      ${c.set?'<button class="btn btn-ghost coderevoke" style="color:var(--red)">Révoquer</button>':""}
-    </div>`;
-  }).join("");
-}
-
-document.getElementById("codes").addEventListener("click", async (e)=>{
-  const card=e.target.closest(".galcode"); if(!card) return;
-  const owner=card.dataset.owner;
-  if(e.target.closest(".codegen")){
-    const r=await fetch("/api/admin/gallery/code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({owner})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok) return alert(d.error||"Échec.");
-    setOwnerCode(owner, true);
-    // Affiche le code (une seule fois) et bascule la carte en « code actif » sans tout re-rendre.
-    const show=card.querySelector(".codeshow");
-    show.innerHTML=`→ <strong>${esc(d.code)}</strong> <button class="btn btn-ghost codecopy" type="button" style="padding:4px 8px;font-size:12px">copier</button>`;
-    show.querySelector(".codecopy").addEventListener("click",()=>{ navigator.clipboard?.writeText(d.code); });
-    const pill=card.querySelector(".pill"); pill.textContent="code actif"; pill.style.background="var(--green)"; pill.style.color="#fff";
-    card.querySelector(".codegen").textContent="↻ Régénérer le code";
-    if(!card.querySelector(".coderevoke")){
-      const rev=document.createElement("button");
-      rev.className="btn btn-ghost coderevoke"; rev.style.color="var(--red)"; rev.textContent="Révoquer";
-      card.appendChild(rev);
-    }
-  }
-  if(e.target.closest(".coderevoke")){
-    if(!confirm("Révoquer le code de ce comité ? Il ne pourra plus se connecter jusqu'à régénération.")) return;
-    const r=await fetch(`/api/admin/gallery/code/${owner}`,{method:"DELETE"});
-    if(!r.ok) return alert("Échec.");
-    setOwnerCode(owner, false);
-    renderCodes();
-  }
-});
-
-function setOwnerCode(owner, on){
-  const c=gallery.codes.find(x=>x.owner===owner);
-  if(c) c.set=on; else gallery.codes.push({owner, set:on});
 }
 
 function renderGallery(){
@@ -398,7 +291,7 @@ function renderGallery(){
         <div style="flex:1 1 200px"><label class="fld">Titre</label>
           <input type="text" class="galtitle" value="${esc(a.title)}"></div>
         <div style="flex:0 0 130px"><label class="fld">Couleur</label>${colorSelect(a.color)}</div>
-        <div style="flex:1 1 180px"><label class="fld">Comité propriétaire</label>${ownerSelect(a.owner)}</div>
+        <div style="flex:1 1 180px"><label class="fld">Étiquette</label>${ownerSelect(a.owner)}</div>
         <div style="flex:2 1 240px"><label class="fld">Lien Drive de l'album</label>
           <input type="text" class="galdrive" value="${esc(a.drive_url)}" placeholder="https://drive.google.com/…"></div>
       </div>
@@ -510,35 +403,6 @@ async function saveDriveAll(){
   btn.textContent = r.ok ? "✓ Enregistré" : "⚠ Échec";
   setTimeout(()=>btn.textContent="Enregistrer",1500);
 }
-
-// --- Vue imprimable : une page A4 sobre par comité (répartition après réaffectation) ---
-function committeePage(c, members, dateStr){
-  const sorted=[...members].sort((a,b)=>a.delegation.localeCompare(b.delegation)||a.full_name.localeCompare(b.full_name));
-  const n=members.length;
-  const rows = sorted.length
-    ? sorted.map((p,i)=>{
-        const eff=effectiveOf(p), req=requestedOf(p);
-        const moved = eff && req && eff!==req;
-        return `<div class="pmem"><span class="num">${i+1}.</span><span class="nm">${esc(p.full_name)}</span><span class="dg">— ${esc(p.delegation)}</span>${moved?`<span class="moved">↩ demandé : ${esc(req)}</span>`:""}</div>`;
-      }).join("")
-    : `<div class="pempty">Aucun membre pour l'instant.</div>`;
-  return `<section class="ppage">
-    <div class="phead"><h2>${esc(c.name)}</h2></div>
-    <div class="pcount">${n} membre${n>1?"s":""} · au ${dateStr}</div>
-    ${rows}
-    <div class="pfoot">WASCAL Cape Coast 2026 — Répartition des comités</div>
-  </section>`;
-}
-
-function buildPrint(){
-  const {groups, unassigned}=groupAll();
-  const dateStr=new Date().toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
-  let html=COMMITTEES.map((c,i)=>committeePage(c, groups[i], dateStr)).join("");
-  if(unassigned.length) html+=committeePage({name:"À placer",color:"#231a10",emoji:"❓",tag:"Sans comité effectif"}, unassigned, dateStr);
-  document.getElementById("printArea").innerHTML=html;
-}
-
-document.getElementById("printBtn").addEventListener("click", ()=>{ buildPrint(); window.print(); });
 
 checkAuth();
 </script>
