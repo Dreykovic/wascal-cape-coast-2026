@@ -1,58 +1,68 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# WASCAL Cape Coast 2026
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Boîte à outils pour le programme **WASCAL Cape Coast 2026** : 32 étudiants et étudiantes,
+8 délégations francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana.
 
-## About Laravel
+Trois piliers : **programme des cours**, **rappels**, **activités** (répartition en comités,
+galerie photo décentralisée). Il n'y a pas de fonctionnalité « devoirs / homework » — hors
+périmètre du projet.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Ce dépôt est le portage Laravel d'une app Node/Fastify d'origine, désormais archivée dans
+[`archive/files/`](archive/files), réécrit pour tourner sur un **hébergement mutualisé**
+(PHP + MySQL, sans VPS, sans Node).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Back** : Laravel 13 / PHP 8.2+, base MySQL en production, SQLite en développement.
+- **Front** : HTML/CSS/JS vanilla, **aucun bundler, aucune étape de build**. Les pages
+  (`resources/pages/*.html`) sont servies statiquement, pas en Blade.
+- Les URL d'API sont identiques à l'app Node d'origine (`/api/responses`, `/api/gallery`,
+  `/api/admin/*`, `/api/comite/*`) : le front fonctionne sans modification.
 
-## Learning Laravel
+Le détail de l'architecture, des conventions et du cœur fonctionnel (galerie décentralisée +
+comités) est documenté dans [`CLAUDE.md`](CLAUDE.md).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Démarrage rapide
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Prérequis : **PHP 8.2+** et **Composer**.
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+composer run setup   # copie .env, génère APP_KEY, crée la base SQLite, migre + seed
+composer run dev      # http://127.0.0.1:8080
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Ou, étape par étape :
 
-## Contributing
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed   # SQLite locale par défaut
+php artisan serve --port=8080      # http://127.0.0.1:8080 (le port 8000 est souvent bloqué sous Windows)
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| But | Commande |
+|---|---|
+| Installer les dépendances | `composer install` |
+| Base + données de démo | `php artisan migrate:fresh --seed` |
+| Lancer en local | `php artisan serve --port=8080` |
+| Tests | `php artisan test` |
+| Vider les caches | `php artisan optimize:clear` |
 
-## Code of Conduct
+Pas de `npm`, pas de build : le front est servi tel quel.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Déploiement
 
-## Security Vulnerabilities
+Guide complet pour un hébergement mutualisé (Hostinger Premium ou équivalent) dans
+[`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Contribuer
 
-## License
+Les contributions sont bienvenues — voir [`CONTRIBUTING.md`](CONTRIBUTING.md) pour la mise en
+route (dev, tests, convention de commit) et [`CLAUDE.md`](CLAUDE.md) pour les conventions du
+projet et l'architecture détaillée.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Licence
+
+Ce projet est sous licence [MIT](LICENSE).

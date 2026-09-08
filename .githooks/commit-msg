@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Retire toute ligne "Co-Authored-By: Claude ..." (ou Anthropic) d'un message de commit,
+# quelle que soit sa provenance (agent IA, copier-coller, etc.).
+# Activer une fois par clone : git config core.hooksPath .githooks
+set -euo pipefail
+
+msg_file="$1"
+tmp_file="$(mktemp)"
+
+grep -viE '^Co-Authored-By:.*(claude|anthropic)' "$msg_file" > "$tmp_file" || true
+
+# Retire les lignes vides en fin de fichier laissées par le filtrage.
+sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp_file" > "$msg_file"
+rm -f "$tmp_file"
