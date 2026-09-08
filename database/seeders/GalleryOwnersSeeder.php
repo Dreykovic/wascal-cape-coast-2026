@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 
 class GalleryOwnersSeeder extends Seeder
 {
-    // Crée un album par propriétaire (4 comités + Club d'anglais) si la galerie est vide.
+    // Crée un album par étiquette (4 étiquettes d'activité + Club d'anglais) si la galerie est vide.
     // Idempotent : ne touche à rien si des albums existent déjà (équivalent seedGalleryIfEmpty).
     public function run(): void
     {
