@@ -237,6 +237,17 @@ document.getElementById("submitBtn").addEventListener("click", async ()=>{
   }
 });
 
+// --- Sondage fermé (interrupteur admin) -------------------------------------
+fetch("/api/survey-status").then(r=>r.json()).then(d=>{
+  if(d && d.open === false){
+    document.getElementById("cardbox").innerHTML =
+      `<section class="step done"><div class="big" aria-hidden="true">🔒</div><h2 tabindex="-1">Le sondage est fermé</h2>
+       <p class="sub" style="color:var(--ink)">Les réponses ne sont plus acceptées pour le moment. Reviens plus tard, ou contacte le Club d'anglais.</p>
+       <a class="btn btn-primary" href="/">Retour à l'accueil</a></section>`;
+    document.getElementById("steps").classList.add("hide");
+  }
+}).catch(()=>{});
+
 // --- Anti-doublon (même appareil) ------------------------------------------
 try{
   if(localStorage.getItem(DONE_KEY)==="1"){

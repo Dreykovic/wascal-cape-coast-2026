@@ -57,10 +57,10 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 |---|---|
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
 | `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours ou la galerie, ce sont des sections du même deck |
-| `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées |
+| `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées. `GET /api/survey-status` (public) reflète l'interrupteur `survey_open` (`Setting`) |
 | `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
 | `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
-| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, export CSV, réglage Drive global |
+| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, export CSV, réglage Drive global, `POST /api/admin/survey/toggle` (ouvre/ferme le sondage) |
 | `app/Http/Controllers/AuthController.php` | Login admin (mot de passe), logout, `me`, `session` |
 | `app/Http/Middleware/RequireAdmin.php` | Alias `admin`. Seul rôle d'accès : super-admin (plus de périmètre par comité à vérifier) |
 | `app/Support/WascalSession.php` | Un seul rôle porté par la **session** (équivalent du cookie signé Node) : `super` |

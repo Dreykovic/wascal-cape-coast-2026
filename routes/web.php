@@ -17,6 +17,7 @@ Route::get('/admin', [PageController::class, 'admin']);    // page publique ; l'
 
 // --- API publique -----------------------------------------------------------
 Route::post('/api/responses', [SurveyController::class, 'store']);
+Route::get('/api/survey-status', [SurveyController::class, 'status']);
 Route::get('/api/gallery', [GalleryController::class, 'index']);
 Route::get('/api/journey-stages', [JourneyStageController::class, 'index']);
 
@@ -31,6 +32,7 @@ Route::middleware('admin')->group(function () {
     Route::get('/api/admin/responses', [AdminController::class, 'responses']);
     Route::get('/api/admin/export.csv', [AdminController::class, 'exportCsv']);
     Route::post('/api/admin/gallery/settings', [AdminController::class, 'gallerySettings']);
+    Route::post('/api/admin/survey/toggle', [AdminController::class, 'surveyToggle']);
 
     // Galerie : gestion complète (plus de scope par comité).
     Route::get('/api/gallery/manage', [GalleryController::class, 'manage']);
