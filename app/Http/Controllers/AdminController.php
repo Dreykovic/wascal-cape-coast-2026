@@ -60,4 +60,12 @@ class AdminController extends Controller
 
         return response()->json(['ok' => true]);
     }
+
+    // POST /api/admin/survey/toggle {open: bool} — ouvre/ferme le sondage aux nouvelles réponses.
+    public function surveyToggle(Request $request): JsonResponse
+    {
+        Setting::write('survey_open', $request->boolean('open') ? '1' : '0');
+
+        return response()->json(['ok' => true, 'open' => $request->boolean('open')]);
+    }
 }

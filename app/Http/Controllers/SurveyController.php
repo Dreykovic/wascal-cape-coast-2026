@@ -3,15 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Response as SurveyResponse;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SurveyController extends Controller
 {
+    // GET /api/survey-status — publique. Le sondage est ouvert par défaut tant que l'admin
+    // ne l'a pas explicitement fermé (interrupteur dans /admin).
+    public function status(): JsonResponse
+    {
+        return response()->json(['ok' => true, 'open' => self::isOpen()]);
+    }
+
+    public static function isOpen(): bool
+    {
+        return Setting::read('survey_open', '1') === '1';
+    }
+
     // POST /api/responses — dépôt d'une réponse au sondage. Public.
     // Validation côté serveur (source de confiance), miroir de server.js.
     public function store(Request $request): JsonResponse
     {
+        if (! self::isOpen()) {
+            return response()->json(['ok' => false, 'error' => 'Le sondage est actuellement fermé.'], 403);
+        }
+
         $b = $request->all();
         $errors = [];
 

@@ -66,6 +66,14 @@
 
   <div class="stat-row" id="stats"></div>
 
+  <div class="card" id="surveyToggleCard" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+    <div style="flex:1 1 260px">
+      <strong>📋 Sondage (<a href="/survey" target="_blank">/survey</a>)</strong>
+      <p class="muted" style="margin:2px 0 0" id="surveyToggleHint">Chargement…</p>
+    </div>
+    <button class="btn" id="surveyToggleBtn" disabled>…</button>
+  </div>
+
   <h2 style="margin:30px 0 8px">🧭 Étapes du séjour</h2>
   <p class="hint">Le carnet de bord du séjour, affiché dans la section « Parcours » de <a href="/" target="_blank">la page d'accueil</a>. Écris chaque étape au passé, une fois vécue — titre, dates réelles, quelques phrases, étiquette de couleur. L'ordre ci-dessous est l'ordre affiché sur la page (flèches pour réordonner).</p>
   <div id="stages"></div>
@@ -127,8 +135,31 @@ async function enterApp(){
   await loadData();
   await loadStages();
   await loadGallery();
+  await loadSurveyToggle();
   render();
 }
+
+// --- Interrupteur du sondage --------------------------------------------------
+async function loadSurveyToggle(){
+  const r=await fetch("/api/survey-status"); const d=await r.json().catch(()=>({}));
+  renderSurveyToggle(d.open !== false);
+}
+function renderSurveyToggle(open){
+  const hint=document.getElementById("surveyToggleHint");
+  const btn=document.getElementById("surveyToggleBtn");
+  hint.textContent = open ? "Ouvert : les visiteurs peuvent répondre." : "Fermé : le formulaire est masqué, les envois sont refusés.";
+  btn.disabled=false;
+  btn.dataset.open = open ? "1" : "0";
+  btn.textContent = open ? "Fermer le sondage" : "Rouvrir le sondage";
+  btn.className = "btn " + (open ? "btn-ghost" : "btn-primary");
+}
+document.getElementById("surveyToggleBtn").addEventListener("click", async (e)=>{
+  const btn=e.currentTarget;
+  const nextOpen = btn.dataset.open !== "1";
+  btn.disabled=true;
+  const r=await fetch("/api/admin/survey/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({open:nextOpen})});
+  if(r.ok){ renderSurveyToggle(nextOpen); } else { btn.disabled=false; alert("Échec de la mise à jour."); }
+});
 
 // --- Réponses au sondage (lecture seule ici, dédupliquées à l'affichage) ----
 async function loadData(){
