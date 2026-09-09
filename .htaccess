@@ -1,0 +1,52 @@
+# ============================================================
+#  Compta Quick — .htaccess racine
+# ------------------------------------------------------------
+#  Contexte : tout le dépôt est déployé dans public_html/
+#  (racine web = racine du projet). Laravel sert l'application
+#  depuis public/ : on réécrit en interne toutes les requêtes
+#  vers ce sous-dossier (l'URL affichée ne change pas).
+#
+#  Le .htaccess de public/ (front controller Laravel) prend
+#  ensuite le relais — d'où le drapeau [L] (surtout PAS [END],
+#  qui empêcherait public/.htaccess de router vers index.php).
+#
+#  Les fichiers hors public/ (.env, .git, app/, vendor/, code
+#  source…) ne sont jamais servis : réécrits vers public/<x>,
+#  ils n'y existent pas et retombent sur le 404 de Laravel.
+#
+#  ⚠️ Sans effet si la racine web pointe déjà sur public/
+#  (option recommandée).
+# ============================================================
+
+Options -Indexes
+
+# Fichiers/dossiers cachés jamais servis (.env, .git/…, .gitignore),
+# sauf .well-known/ (renouvellement des certificats SSL).
+# mod_alias : actif même si mod_rewrite est indisponible.
+RedirectMatch 404 (?i)^/\.(?!well-known/)
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Ne rien faire si la requête vise déjà public/ (évite la boucle)
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Repli si mod_rewrite est absent : au minimum, ne pas livrer les
+# secrets ni le code source présents à la racine.
+<IfModule !mod_rewrite.c>
+    <FilesMatch "\.(env|lock|md|ya?ml|sh|dist)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^(artisan|composer\.(json|phar))$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# --- (Optionnel) Forcer HTTPS — décommenter si non géré par l'hébergeur ---
+# <IfModule mod_rewrite.c>
+#     RewriteCond %{HTTPS} !=on
+#     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
