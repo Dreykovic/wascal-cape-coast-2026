@@ -145,10 +145,10 @@ php artisan route:cache
 
 ## 7. Vérifier
 
-1. Ouvre `https://ton-domaine.example/` → le site s'affiche, la galerie se charge.
+1. Ouvre `https://ton-domaine.example/` → le site s'affiche ; fais défiler jusqu'à la slide
+   « Parcours » (étapes semées par défaut) et « Galerie ».
 2. `/survey` → remplis et envoie une réponse test.
-3. `/parcours` → les étapes semées par défaut s'affichent.
-4. `/admin` → connecte-toi avec `ADMIN_PASSWORD` → tu vois les réponses, l'export CSV, les étapes du
+3. `/admin` → connecte-toi avec `ADMIN_PASSWORD` → tu vois les réponses, l'export CSV, les étapes du
    parcours et la galerie. Édite les étapes (titre, dates réelles, texte) au fil du séjour.
 
 ---

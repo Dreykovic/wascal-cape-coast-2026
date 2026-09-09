@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Programme d'activités — WASCAL Cape Coast</title>
-<meta name="description" content="Une promotion francophone, 8 délégations d'Afrique de l'Ouest, 4 mois à Cape Coast. Apprendre l'anglais, découvrir le Ghana, célébrer nos cultures." />
+<title>Le carnet de notre séjour — WASCAL Cape Coast</title>
+<meta name="description" content="Le carnet de bord du séjour WASCAL Cape Coast 2026 : une promotion francophone, 8 délégations d'Afrique de l'Ouest, 16 semaines à Cape Coast — racontées étape par étape." />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Programme d'activités — WASCAL Cape Coast 🪘" />
-<meta property="og:description" content="Ensemble, on apprend plus grand. Une promotion francophone, 8 pays d'Afrique de l'Ouest, 4 mois à Cape Coast pour l'anglais, le Ghana et nos cultures." />
+<meta property="og:title" content="Le carnet de notre séjour — WASCAL Cape Coast 🪘" />
+<meta property="og:description" content="Une promotion francophone, 8 pays d'Afrique de l'Ouest, 16 semaines à Cape Coast : le carnet de bord de ce qu'on y vit, porté par le Club d'anglais." />
 <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Cape_Coast_Castle%2C_Cape_Coast%2C_Ghana.JPG/1280px-Cape_Coast_Castle%2C_Cape_Coast%2C_Ghana.JPG" />
 <meta property="og:locale" content="fr_FR" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -37,7 +37,7 @@
   @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
 
   /* ===== DECK ===== */
-  #deck{transition:transform .8s cubic-bezier(.76,0,.24,1);will-change:transform}
+  #deck{transition:transform .55s cubic-bezier(.22,1,.36,1);will-change:transform}
   .slide{height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .slide::-webkit-scrollbar{width:0;height:0;display:none}
   .panel{min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:64px 0 70px}
@@ -191,13 +191,14 @@
   .lb .lnav svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.4}
   .lb .lx:hover,.lb .lnav:hover{background:rgba(255,255,255,.28)}
 
-  /* calendrier */
-  .cal{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
-  .mo{background:var(--paper);border:2.5px solid var(--ink);border-radius:16px;padding:20px;box-shadow:5px 5px 0 rgba(35,26,16,.14);transition:transform .25s}
-  .mo:hover{transform:translateY(-5px)}
-  .mo .tag{display:inline-block;font-family:'Fraunces',serif;font-weight:900;font-size:.78rem;color:#fff;padding:3px 12px;border-radius:30px;margin-bottom:9px}
-  .mo h3{margin-bottom:4px}
-  .mo p{font-size:.85rem;color:var(--soft)}
+  /* parcours (étapes du séjour, alimenté par /api/journey-stages) */
+  .stages{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:30px}
+  .stg{background:var(--paper);border:2.5px solid var(--ink);border-radius:16px;padding:18px;box-shadow:5px 5px 0 rgba(35,26,16,.14);transition:transform .25s;overflow:hidden}
+  .stg:hover{transform:translateY(-5px)}
+  .stg .k{display:inline-block;font-family:'Fraunces',serif;font-weight:900;font-size:.7rem;color:#fff;padding:3px 11px;border-radius:30px;margin-bottom:8px}
+  .stg .when{float:right;font-size:.72rem;font-weight:800;color:var(--muted);margin-top:4px}
+  .stg h3{margin-bottom:5px;font-size:1.02rem}
+  .stg p{font-size:.85rem;color:var(--soft);white-space:pre-line}
 
   /* closing */
   .close{color:#fff;text-align:center}
@@ -229,8 +230,8 @@
   .ticker span{font-family:'Fraunces',serif;font-weight:900;font-size:.92rem;padding:0 0;white-space:nowrap}
   .ticker span i{color:var(--gold);font-style:normal;margin:0 22px}
 
-  @media(max-width:900px){.pcards,.acts4,.dels,.gal,.cal,.fmts,.cols3{grid-template-columns:repeat(2,1fr)}.fmts{grid-template-columns:1fr 1fr}.ubuntu .ugrid{grid-template-columns:1fr;gap:24px}.ring{max-width:250px}.dots{display:none}.brand{font-size:.82rem;left:20px;top:20px}}
-  @media(max-width:560px){.wrap{padding:0 20px}.pcards,.acts4,.cal{grid-template-columns:1fr}.gal{grid-template-columns:1fr 1fr;gap:13px}.dels{grid-template-columns:1fr 1fr}.club{padding:28px 20px}.panel{padding:58px 0 70px}.hero .panel{padding-bottom:84px}.arrows{right:14px;bottom:52px}.arrows button{width:44px;height:44px}.counter{left:18px;bottom:54px}.hero .acts{width:100%}.hero .acts .btn{flex:1 1 auto;justify-content:center}.fmts{grid-template-columns:1fr 1fr}}
+  @media(max-width:900px){.pcards,.acts4,.dels,.gal,.stages,.fmts,.cols3{grid-template-columns:repeat(2,1fr)}.fmts{grid-template-columns:1fr 1fr}.ubuntu .ugrid{grid-template-columns:1fr;gap:24px}.ring{max-width:250px}.dots{display:none}.brand{font-size:.82rem;left:20px;top:20px}}
+  @media(max-width:560px){.wrap{padding:0 20px}.pcards,.acts4,.stages{grid-template-columns:1fr}.gal{grid-template-columns:1fr 1fr;gap:13px}.dels{grid-template-columns:1fr 1fr}.club{padding:28px 20px}.panel{padding:58px 0 70px}.hero .panel{padding-bottom:84px}.arrows{right:14px;bottom:52px}.arrows button{width:44px;height:44px}.counter{left:18px;bottom:54px}.hero .acts{width:100%}.hero .acts .btn{flex:1 1 auto;justify-content:center}.fmts{grid-template-columns:1fr 1fr}}
   @media(max-width:380px){.dels{grid-template-columns:1fr}.fmts{grid-template-columns:1fr}.hero h1{font-size:2.05rem}.btn{padding:13px 20px;font-size:.94rem}}
   @media(prefers-reduced-motion:reduce){#deck{transition:none}*{animation:none!important}.reveal{opacity:1!important;transform:none!important}.ring .dot{transform:scale(1)!important}}
 
@@ -254,13 +255,13 @@
       <i style="left:92%;top:50%;background:var(--amber);animation-delay:.9s"></i>
     </div>
     <div class="panel"><div class="wrap">
-      <span class="tag reveal">Promotion francophone WASCAL · Cape Coast 2026</span>
-      <h1 class="reveal">Ensemble, on apprend<br>plus <span class="y">grand.</span></h1>
-      <p class="reveal">Une promotion entière, 8 pays d'Afrique de l'Ouest, quatre mois au Ghana : on maîtrise l'anglais et on vit une aventure qui nous lie pour de bon.</p>
+      <span class="tag reveal">Le carnet de bord · Club d'anglais · Cape Coast 2026</span>
+      <h1 class="reveal">Le carnet de notre<br>séjour <span class="y">à Cape Coast.</span></h1>
+      <p class="reveal">Une promotion entière, 8 pays d'Afrique de l'Ouest, seize semaines à Cape Coast — ce qu'on y vit, étape après étape, raconté au fil du temps par le Club d'anglais.</p>
       <div class="chips reveal">
         <span class="chip"><b data-count="32">0</b>+ étudiants</span><span class="chip"><b data-count="8">0</b> pays</span><span class="chip"><b data-count="16">0</b> semaines</span><span class="chip"><b data-count="1">0</b> festival</span>
       </div>
-      <div class="acts reveal"><a class="btn gold" href="/survey">Je remplis le sondage</a><a class="btn ghost" data-next>Voir le programme</a><a class="btn ghost" href="/parcours">🧭 Le parcours</a></div>
+      <div class="acts reveal"><a class="btn gold" href="#slide-parcours" data-goto="slide-parcours">🧭 Suivre le parcours</a><a class="btn ghost" data-next>Voir le programme</a><a class="btn ghost" href="/survey">Je remplis le sondage</a></div>
       <div class="fstrip reveal">
         <svg width="30" height="20" viewBox="0 0 48 32"><rect width="16" height="32" fill="#008751"/><rect x="16" width="32" height="16" fill="#fcd116"/><rect x="16" y="16" width="32" height="16" fill="#e8112d"/></svg>
         <svg width="30" height="20" viewBox="0 0 48 32"><rect width="48" height="16" fill="#ef2b2d"/><rect y="16" width="48" height="16" fill="#009639"/><g transform="translate(24,16)"><polygon points="0,-6 1.4,-1.9 5.7,-1.9 2.3,0.7 3.5,4.9 0,2.4 -3.5,4.9 -2.3,0.7 -5.7,-1.9 -1.4,-1.9" fill="#fcd116"/></g></svg>
@@ -395,16 +396,12 @@
     <p class="lead reveal" style="margin-top:14px;font-size:.86rem;color:var(--muted)">Clique sur une couverture pour l'ouvrir en plein écran ; le bouton Drive de chaque album mène à toutes les photos de l'activité.</p>
   </div></div></section>
 
-  <!-- 8 CALENDRIER -->
-  <section class="slide"><div class="panel"><div class="wrap">
-    <p class="over reveal">Sur quatre mois</p>
-    <h2 class="reveal">Un thème par mois</h2>
-    <div class="cal stagger">
-      <div class="mo reveal r-zoom"><span class="tag" style="background:var(--blue)">Mois 1</span><h3>Découverte</h3><p>On apprend à se connaître · première sortie.</p></div>
-      <div class="mo reveal r-zoom"><span class="tag" style="background:var(--green)">Mois 2</span><h3>Immersion</h3><p>Débats, échanges ghanéens · Kakum.</p></div>
-      <div class="mo reveal r-zoom"><span class="tag" style="background:var(--amber)">Mois 3</span><h3>Culture</h3><p>Soirées-pays, danse · excursions.</p></div>
-      <div class="mo reveal r-zoom"><span class="tag" style="background:var(--red)">Mois 4</span><h3>Festival</h3><p>Tournoi · grande soirée de clôture.</p></div>
-    </div>
+  <!-- 8 PARCOURS -->
+  <section class="slide" id="slide-parcours"><div class="panel"><div class="wrap">
+    <p class="over reveal">Le carnet de bord</p>
+    <h2 class="reveal">Notre parcours, étape par étape</h2>
+    <p class="lead reveal">Ce qu'on a vécu, dans l'ordre où ça s'est passé — écrit par le Club d'anglais au fil du séjour.</p>
+    <div class="stages stagger" id="stagesShelf"><p class="muted">Chargement du parcours…</p></div>
   </div></div></section>
 
   <!-- 9 CLOSING -->
@@ -415,7 +412,7 @@
       <p class="over reveal" style="color:var(--gold)">Le point d'orgue</p>
       <h2 class="reveal">Le Grand Festival des cultures</h2>
       <div class="big reveal">Have fun in English! 🌍</div>
-      <div class="reveal"><a class="btn gold" href="/survey">Choisis tes activités</a></div>
+      <div class="reveal" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><a class="btn gold" href="#slide-parcours" data-goto="slide-parcours">🧭 Revivre le parcours</a><a class="btn ghost" href="/survey">Choisis tes activités</a></div>
       <div class="crd reveal">Photos : Wikimedia Commons, CC BY-SA 3.0 — Cape Coast &amp; Elmina <a href="https://commons.wikimedia.org/wiki/File:Cape_Coast_Castle,_Cape_Coast,_Ghana.JPG">Rjruiziii</a>, Kakum <a href="https://commons.wikimedia.org/wiki/File:Kakum_Canopy_Walk,_Kakum_National_Park,_Ghana.JPG">Benggriff</a>.</div>
     </div></div>
   </section>
@@ -507,11 +504,31 @@
     }).catch(function(){});
   })();
 
+  /* ===== PARCOURS — étapes du séjour, alimenté par l'API (GET /api/journey-stages).
+     Les étapes se gèrent depuis /admin (rien à coder ici). */
+  (function(){
+    var shelf=document.getElementById('stagesShelf');
+    if(!shelf)return;
+    function escAttr(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    fetch('/api/journey-stages').then(function(r){return r.json();}).then(function(d){
+      var stages=(d&&d.ok&&d.stages)||[];
+      if(!stages.length){ shelf.innerHTML='<p class="muted">Le parcours n\'a pas encore été rempli — revenez bientôt !</p>'; return; }
+      shelf.innerHTML=stages.map(function(s,i){
+        var tag=s.tagColor?'<span class="k" style="background:'+escAttr(s.tagColor)+'">'+escAttr(s.tagName||'')+'</span>':'';
+        var when=s.date_label?'<span class="when">'+escAttr(s.date_label)+'</span>':'';
+        var body=s.body?'<p>'+escAttr(s.body)+'</p>':'';
+        return '<div class="stg reveal r-zoom" style="--sd:'+(i*70)+'ms">'+tag+when+'<h3>'+escAttr(s.title)+'</h3>'+body+'</div>';
+      }).join('');
+    }).catch(function(){
+      shelf.innerHTML='<p class="muted">Impossible de charger le parcours pour le moment.</p>';
+    });
+  })();
+
   var rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var deck=document.getElementById('deck');
   var slides=[].slice.call(document.querySelectorAll('.slide'));
-  var N=slides.length, idx=0, lock=false;
-  var labels=['Accueil','Région','Objectifs','Club','Activités','Délégations','Ubuntu','Galerie','Calendrier','Festival'];
+  var N=slides.length, idx=0, lockUntil=0;
+  var labels=['Accueil','Région','Objectifs','Club','Activités','Délégations','Ubuntu','Galerie','Parcours','Festival'];
   var prevB=document.getElementById('prev'), nextB=document.getElementById('next'), counter=document.getElementById('counter');
 
   // points de navigation
@@ -559,8 +576,17 @@
   prevB.onclick=function(){go(idx-1);};
   nextB.onclick=function(){go(idx+1);};
   document.querySelectorAll('[data-next]').forEach(function(el){el.onclick=function(e){e.preventDefault();go(idx+1);};});
+  document.querySelectorAll('[data-goto]').forEach(function(el){
+    el.onclick=function(e){
+      var i=slides.findIndex(function(s){return s.id===el.dataset.goto;});
+      if(i<0)return; e.preventDefault(); go(i);
+    };
+  });
 
-  // molette (avec scroll interne si la page déborde)
+  // molette (avec scroll interne si la page déborde). Verrouillage glissant : un tick déclenche
+  // une transition et verrouille pour sa durée ; toute molette reçue pendant ce verrou (typiquement
+  // l'inertie d'un trackpad) le prolonge de peu au lieu de déclencher un 2e changement de slide —
+  // le prochain vrai geste n'attend que la fin réelle de l'inertie, pas un délai fixe.
   window.addEventListener('wheel',function(e){
     if(window.__lbOpen)return;
     var s=slides[idx];
@@ -570,16 +596,20 @@
       if((e.deltaY>0&&!atBot)||(e.deltaY<0&&!atTop))return;
     }
     e.preventDefault();
-    if(lock||Math.abs(e.deltaY)<6)return;
-    lock=true;setTimeout(function(){lock=false;},850);
+    var now=Date.now();
+    if(now<lockUntil){ lockUntil=Math.max(lockUntil, now+120); return; }
+    if(Math.abs(e.deltaY)<8)return;
+    lockUntil=now+560;
     go(idx+(e.deltaY>0?1:-1));
   },{passive:false});
 
   // clavier
   window.addEventListener('keydown',function(e){
     if(window.__lbOpen)return;
-    if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(idx+1);}
-    else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();go(idx-1);}
+    var now=Date.now();
+    if((e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '||e.key==='ArrowUp'||e.key==='PageUp')&&now<lockUntil){e.preventDefault();return;}
+    if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();lockUntil=now+560;go(idx+1);}
+    else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();lockUntil=now+560;go(idx-1);}
     else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(N-1);}
   });
 

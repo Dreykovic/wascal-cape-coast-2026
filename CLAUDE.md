@@ -11,9 +11,10 @@ francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana). Trois pilier
 cours**, **rappels**, **activités**. Il n'y a **pas** de fonctionnalité « devoirs / homework » — hors
 périmètre, ne pas la réintroduire.
 
-Le site est un **carnet de bord** du séjour, porté par le **Club d'anglais** : la page `/parcours`
-raconte les étapes du séjour au fil du temps, et la galerie montre les activités qui s'y sont
-déroulées. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
+Le site vitrine (`/`) est un **one-page** (un seul deck de slides, pas de routes séparées pour la
+narration) — porté par le **Club d'anglais**, il raconte le carnet de bord du séjour : une section
+« Parcours » du deck montre les étapes du séjour au fil du temps, et une section « Galerie » montre
+les activités qui s'y sont déroulées. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
 de comité, plus de connexion par code de comité, plus de réaffectation par l'admin) — hors périmètre,
 ne pas la réintroduire. Le sondage (`/survey`) collecte encore logement, niveau d'anglais, activités,
 talents ; une éventuelle transformation en « livre d'or » (contribution après-séjour) est trackée en
@@ -33,7 +34,8 @@ sans VPS, sans Node). Le **front est réutilisé tel quel** ; seule la couche se
 - Le levier du portage : **URL d'API identiques** à l'app Node d'origine pour ce qui subsiste
   (`/api/responses`, `/api/gallery`, `/api/admin/*`, `/api/gallery/*`) → ce front fonctionne sans
   modification. Le concept de comités (et ses routes `/comite`, `/api/comite/*`) a été retiré du
-  portage ; `/api/journey-stages` et `/parcours` sont propres à Laravel, sans équivalent Node.
+  portage ; `/api/journey-stages` est propre à Laravel, sans équivalent Node — consommé par la
+  section « Parcours » du one-page (`index.html`), pas par une route séparée.
 
 ## Commandes
 
@@ -54,7 +56,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | Chemin | Rôle |
 |---|---|
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
-| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin`, `/parcours` = fichiers `resources/pages/*.html` |
+| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours ou la galerie, ce sont des sections du même deck |
 | `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées |
 | `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
 | `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
@@ -68,14 +70,16 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | `config/wascal.php` | **Référentiels serveur** (délégations, étiquettes d'activité/galerie, activités, talents, `admin_password`, `uploads_path`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
 | `database/seeders/GalleryOwnersSeeder.php` | Sème 1 album par étiquette (4 étiquettes + Club d'anglais) si la galerie est vide |
 | `database/seeders/JourneyStageSeeder.php` | Sème une trame de 8 étapes (titres/textes à ajuster) si `journey_stages` est vide |
-| `resources/pages/*.html` | Front vanilla (index, survey, admin, parcours) |
+| `resources/pages/*.html` | Front vanilla (index = one-page vitrine, survey, admin) |
 | `DEPLOY-HOSTINGER.md` | **Guide de déploiement mutualisé** (racine web sur `public/`, upload avec `vendor/`, MySQL, migrations) |
 
 ## Le cœur : le carnet de bord (parcours + galerie)
 
-- **Parcours** (`/parcours`, table `journey_stages`) : chronologie du séjour, gérée depuis `/admin`
-  (titre, étiquette de couleur, dates en texte libre, corps rédigé au passé). Ordre = `sort_order`,
-  réordonné via `POST /api/admin/journey-stages/reorder {ids: [...]}`.
+- **Parcours** (section du one-page `index.html`, table `journey_stages`) : chronologie du séjour,
+  gérée depuis `/admin` (titre, étiquette de couleur, dates en texte libre, corps rédigé au passé),
+  affichée dans la slide « Parcours » via `GET /api/journey-stages` — même pattern que la galerie
+  (fetch côté client, rendu en JS, rien de dédié côté route). Ordre = `sort_order`, réordonné via
+  `POST /api/admin/journey-stages/reorder {ids: [...]}`.
 - **Galerie** : chaque album a une colonne `owner`, qui est désormais une simple **étiquette de
   couleur** (`config('wascal.gallery_owners')` : Club d'anglais + 4 étiquettes), pas un compte scopé.
   Un seul espace de gestion (`/admin`, super-admin) ; pas de connexion par code, pas de périmètre à
@@ -84,6 +88,10 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 
 ## Conventions
 
+- **Le site vitrine est un one-page** : `index.html` est un seul deck de slides (navigation JS, pas
+  d'ancres d'URL). Un nouveau contenu narratif (parcours, galerie, etc.) est **une section du deck**,
+  pas une nouvelle route/page — `/survey` et `/admin` restent seuls en dehors du deck car ce sont des
+  outils fonctionnels, pas de la narration.
 - **Parité avec l'app Node d'origine** (archivée dans `archive/files/`) : mêmes contrats d'API, mêmes
   règles de validation, mêmes messages. Le front lit `d.errors` (pluriel) pour le sondage, `d.error`
   (singulier) pour les erreurs galerie/admin — respecter cette distinction.

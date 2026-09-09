@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PageController::class, 'index']);
 Route::get('/survey', [PageController::class, 'survey']);
 Route::get('/admin', [PageController::class, 'admin']);    // page publique ; l'API derrière exige l'auth
-Route::get('/parcours', [PageController::class, 'parcours']);
+// Pas de route /parcours : le site est un one-page (index.html). Les étapes du parcours sont une
+// section de ce deck, alimentée par GET /api/journey-stages ci-dessous.
 
 // --- API publique -----------------------------------------------------------
 Route::post('/api/responses', [SurveyController::class, 'store']);

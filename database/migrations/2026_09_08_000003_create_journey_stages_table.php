@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// Étapes du séjour à UCC (page /parcours) : le carnet de bord chronologique qui remplace
+// Étapes du séjour à UCC (section « Parcours » du one-page) : le carnet de bord chronologique qui remplace
 // la logique de comités. Chaque étape porte une étiquette d'activité (couleur, cf.
 // config('wascal.gallery_owners')) et un texte rédigé au passé par le Club d'anglais.
 return new class extends Migration
