@@ -6,8 +6,8 @@ use App\Models\JourneyStage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Étapes du séjour (page /parcours). Lecture publique ; écriture réservée au super-admin
-// (middleware `admin`, cf. routes/web.php).
+// Étapes du séjour, affichées dans la section « Parcours » du one-page (resources/pages/index.html).
+// Lecture publique ; écriture réservée au super-admin (middleware `admin`, cf. routes/web.php).
 class JourneyStageController extends Controller
 {
     // GET /api/journey-stages — publique.
