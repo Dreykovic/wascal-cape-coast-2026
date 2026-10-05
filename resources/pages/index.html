@@ -235,6 +235,29 @@
   @media(max-width:380px){.dels{grid-template-columns:1fr}.fmts{grid-template-columns:1fr}.hero h1{font-size:2.05rem}.btn{padding:13px 20px;font-size:.94rem}}
   @media(prefers-reduced-motion:reduce){#deck{transition:none}*{animation:none!important}.reveal{opacity:1!important;transform:none!important}.ring .dot{transform:scale(1)!important}}
 
+  /* ===== ADINKRA : symboles tracés au trait, animés à l'arrivée sur la slide ===== */
+  .adk-fx{position:sticky;top:0;left:0;display:block;width:100%;height:100dvh;margin-bottom:-100dvh;pointer-events:none;z-index:1}
+  .slide .panel{position:relative;z-index:2}
+  @keyframes adkDraw{to{stroke-dashoffset:0}}
+  @keyframes adkBreathe{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.05) rotate(2deg)}}
+  .adk{display:block;overflow:visible;color:var(--gold);transform-origin:center}
+  .adk path{fill:none;stroke:currentColor;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1}
+  .slide.active .adk path{animation:adkDraw 1.6s cubic-bezier(.65,0,.25,1) forwards;animation-delay:calc(var(--sd,0s) + var(--p,0)*.14s)}
+  .slide.active .adk.live{animation:adkBreathe 6s ease-in-out 2.2s infinite}
+  .adk.spin-slow{animation:spin 90s linear infinite}
+  .adk-frieze{margin:18px 0 6px}
+  .adk-frieze .row{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+  .adk-frieze .adk{width:46px;height:46px;cursor:pointer;transition:transform .25s,color .25s}
+  .adk-frieze .adk:nth-child(5n+1){color:var(--red)}.adk-frieze .adk:nth-child(5n+2){color:var(--green)}
+  .adk-frieze .adk:nth-child(5n+3){color:var(--blue)}.adk-frieze .adk:nth-child(5n+4){color:var(--amber)}
+  .adk-frieze .adk:nth-child(5n){color:var(--plum)}
+  .adk-frieze .adk:hover,.adk-frieze .adk:focus-visible{transform:translateY(-4px) scale(1.18) rotate(-5deg);outline:none}
+  .adk-cap{min-height:1.5em;margin-top:6px;font-size:.84rem;color:var(--soft)}
+  .adk-cap b{font-family:'Fraunces',serif}
+  .adk-close{width:clamp(90px,12vw,140px);margin:0 auto 10px;color:var(--gold)}
+  @media(max-width:560px){.adk-frieze .adk{width:38px;height:38px}}
+  @media(prefers-reduced-motion:reduce){.adk path{stroke-dashoffset:0!important}}
+
 </style>
 </head>
 <body>
@@ -359,7 +382,8 @@
   </div></div></section>
 
   <!-- 6 UBUNTU -->
-  <section class="slide ubuntu"><div class="panel"><div class="wrap">
+  <section class="slide ubuntu">
+    <div class="panel"><div class="wrap">
     <div class="ugrid">
       <div class="reveal r-left">
         <p class="over">Notre esprit</p>
@@ -401,6 +425,7 @@
     <p class="over reveal">Le carnet de bord</p>
     <h2 class="reveal">Notre parcours, étape par étape</h2>
     <p class="lead reveal">Ce qu'on a vécu, dans l'ordre où ça s'est passé — écrit par le Club d'anglais au fil du séjour.</p>
+    <div class="adk-frieze reveal"><div class="row"><svg class="adk" style="--sd:0.0s" data-adinkra="sankofa"></svg><svg class="adk" style="--sd:0.1s" data-adinkra="gyenyame"></svg><svg class="adk" style="--sd:0.3s" data-adinkra="dwennimmen"></svg><svg class="adk" style="--sd:0.4s" data-adinkra="funtunfunefu"></svg><svg class="adk" style="--sd:0.6s" data-adinkra="adinkrahene"></svg><svg class="adk" style="--sd:0.8s" data-adinkra="nyamedua"></svg><svg class="adk" style="--sd:0.9s" data-adinkra="duafe"></svg><svg class="adk" style="--sd:1.1s" data-adinkra="aya"></svg></div><p class="adk-cap">Survole un symbole Adinkra pour découvrir son sens.</p></div>
     <div class="stages stagger" id="stagesShelf"><p class="muted">Chargement du parcours…</p></div>
   </div></div></section>
 
@@ -409,6 +434,7 @@
     <img class="bg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Kakum_Canopy_Walk%2C_Kakum_National_Park%2C_Ghana.JPG/1280px-Kakum_Canopy_Walk%2C_Kakum_National_Park%2C_Ghana.JPG" alt="Forêt de Kakum">
     <div class="ov"></div>
     <div class="panel"><div class="wrap">
+      <svg class="adk adk-close live" data-adinkra="sankofa" style="--sd:.3s"></svg>
       <p class="over reveal" style="color:var(--gold)">Le point d'orgue</p>
       <h2 class="reveal">Le Grand Festival des cultures</h2>
       <div class="big reveal">Have fun in English! 🌍</div>
@@ -628,5 +654,6 @@
 
   render();
 </script>
+<script type="module" src="/adinkra.js"></script>
 </body>
 </html>
