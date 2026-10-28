@@ -7,19 +7,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PageController extends Controller
 {
-    public function index(): Response
-    {
-        // Seule page indexable : on y injecte l'URL absolue du site (canonical, og:url, JSON-LD).
-        $html = file_get_contents(resource_path('pages/index.html'));
-        $html = str_replace('%SITE_URL%', rtrim(config('app.url'), '/'), $html);
-
-        return response($html)->header('Content-Type', 'text/html; charset=UTF-8');
-    }
-
-    public function survey(): BinaryFileResponse
-    {
-        return $this->page('survey');
-    }
+    // Pages publiques : on y injecte l'URL absolue du site (canonical, og:url, og:image, JSON-LD).
+    public function index(): Response  { return $this->render('index'); }
+    public function survey(): Response { return $this->render('survey'); }
 
     public function admin(): BinaryFileResponse
     {
@@ -45,6 +35,14 @@ class PageController extends Controller
             . '</urlset>' . "\n";
 
         return response($xml)->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
+    protected function render(string $name): Response
+    {
+        $html = file_get_contents(resource_path("pages/{$name}.html"));
+        $html = str_replace('%SITE_URL%', rtrim(config('app.url'), '/'), $html);
+
+        return response($html)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     // Sert une page HTML statique de resources/pages (front vanilla, aucun build, aucun parsing Blade).
