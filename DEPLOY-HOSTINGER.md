@@ -37,7 +37,7 @@ php artisan key:generate        # génère APP_KEY
 APP_NAME="WASCAL Cape Coast 2026"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://ton-domaine.example        # l'URL publique réelle
+APP_URL=https://wascal.birewa.com             # URL publique réelle, sans slash final (utilisée par canonical, robots.txt, sitemap.xml)
 APP_KEY=base64:...                          # déjà rempli par key:generate
 
 ADMIN_PASSWORD=un-mot-de-passe-solide       # accès à /admin — À CHANGER
