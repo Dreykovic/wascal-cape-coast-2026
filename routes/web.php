@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 // --- Pages (front vanilla servi statiquement depuis resources/pages) --------
 Route::get('/', [PageController::class, 'index']);
 Route::get('/survey', [PageController::class, 'survey']);
+Route::get('/robots.txt', [PageController::class, 'robots']);
+Route::get('/sitemap.xml', [PageController::class, 'sitemap']);
 Route::get('/admin', [PageController::class, 'admin']);    // page publique ; l'API derrière exige l'auth
 // Pas de route /parcours : le site est un one-page (index.html). Les étapes du parcours sont une
 // section de ce deck, alimentée par GET /api/journey-stages ci-dessous.
