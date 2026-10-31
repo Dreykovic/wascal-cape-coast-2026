@@ -11,9 +11,9 @@ francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana). Trois pilier
 cours**, **rappels**, **activités**. Il n'y a **pas** de fonctionnalité « devoirs / homework » — hors
 périmètre, ne pas la réintroduire.
 
-Le site vitrine (`/`) est un **one-page** (un seul deck de slides, pas de routes séparées pour la
+Le site vitrine (`/`) est un **one-page** (un seul document à scroll natif découpé en sections ancrées, pas de routes séparées pour la
 narration) — porté par le **Club d'anglais**, il raconte le carnet de bord du séjour : une section
-« Parcours » du deck montre les étapes du séjour au fil du temps, et une section « Galerie » montre
+« Parcours » montre les étapes du séjour au fil du temps, et une section « Galerie » montre
 les activités qui s'y sont déroulées. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
 de comité, plus de connexion par code de comité, plus de réaffectation par l'admin) — hors périmètre,
 ne pas la réintroduire. Le sondage (`/survey`) collecte encore logement, niveau d'anglais, activités,
@@ -56,7 +56,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | Chemin | Rôle |
 |---|---|
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
-| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours ou la galerie, ce sont des sections du même deck |
+| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours ou la galerie, ce sont des sections ancrées du même document (`#parcours`, `#galerie`…). CSS/JS de la page dans `public/home.css` / `public/home.js` |
 | `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées. `GET /api/survey-status` (public) reflète l'interrupteur `survey_open` (`Setting`) |
 | `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
 | `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
@@ -77,7 +77,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 
 - **Parcours** (section du one-page `index.html`, table `journey_stages`) : chronologie du séjour,
   gérée depuis `/admin` (titre, étiquette de couleur, dates en texte libre, corps rédigé au passé),
-  affichée dans la slide « Parcours » via `GET /api/journey-stages` — même pattern que la galerie
+  affichée dans la section « Parcours » (`#parcours`) via `GET /api/journey-stages` — même pattern que la galerie
   (fetch côté client, rendu en JS, rien de dédié côté route). Ordre = `sort_order`, réordonné via
   `POST /api/admin/journey-stages/reorder {ids: [...]}`.
 - **Galerie** : chaque album a une colonne `owner`, qui est désormais une simple **étiquette de
@@ -88,10 +88,18 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 
 ## Conventions
 
-- **Le site vitrine est un one-page** : `index.html` est un seul deck de slides (navigation JS, pas
-  d'ancres d'URL). Un nouveau contenu narratif (parcours, galerie, etc.) est **une section du deck**,
-  pas une nouvelle route/page — `/survey` et `/admin` restent seuls en dehors du deck car ce sont des
-  outils fonctionnels, pas de la narration.
+- **Le site vitrine est un one-page** : `index.html` est un seul document à **scroll natif** (plus de
+  deck : ne pas réintercepter molette/clavier/tactile), découpé en `<section id>` ancrées (`#accueil`,
+  `#qui`, `#parcours`, `#galerie`, `#cape-coast`, `#quotidien`, `#ubuntu`, `#festival`). Un nouveau
+  contenu narratif est **une section** de ce document, pas une nouvelle route/page — `/survey` et
+  `/admin` restent seuls en dehors car ce sont des outils fonctionnels, pas de la narration.
+- **Animations au scroll** : CSS `animation-timeline` sous `@supports`, repli IntersectionObserver qui
+  pose `.in-view` ; tout le contenu reste visible sans JS ni animation, `prefers-reduced-motion` = statique.
+  Aucun symbole flottant / particule en arrière-plan (retiré exprès).
+- **Adinkra = système visuel** : `public/adinkra.js` (14 symboles au trait, `adinkraSVG`, `hydrateAll`)
+  hydrate tout `[data-adinkra]` ; le tracé est animé par le CSS de la page. Pas d'emojis sur le one-page.
+- **Identité** : WASCAL **6th batch** (6e promotion), deux Masters de recherche — *Marine Science and
+  Climate Change* et *Informatics Applied to Climate Change* — à garder dans le contenu et les meta.
 - **Parité avec l'app Node d'origine** (archivée dans `archive/files/`) : mêmes contrats d'API, mêmes
   règles de validation, mêmes messages. Le front lit `d.errors` (pluriel) pour le sondage, `d.error`
   (singulier) pour les erreurs galerie/admin — respecter cette distinction.
