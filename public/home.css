@@ -268,7 +268,7 @@ abbr[title]{text-decoration:underline dotted 1px;text-underline-offset:3px;curso
   .stage .stage-card::before{left:-9px!important;right:auto!important;top:34px;border-right:0!important;border-top:0!important;border-left:var(--border)!important;border-bottom:var(--border)!important}
 }
 
-/* États chargement / vide / erreur (parcours + galerie) */
+/* États chargement / vide / erreur (parcours) */
 .state{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding:36px 16px;color:var(--ink-2);font-weight:600;position:relative;z-index:1}
 .state .adk{width:64px;height:64px;color:var(--amber-text)}
 .state .adk path{stroke-width:4.5}
@@ -276,40 +276,9 @@ abbr[title]{text-decoration:underline dotted 1px;text-underline-offset:3px;curso
 .state--error .adk{color:var(--red)}
 .state[hidden]{display:none}
 
-/* ---------- 10. Galerie ---------- */
-.sec--galerie{--sec-c:var(--blue)}
-.gal-wrap{position:relative}
-.gal{display:grid;grid-auto-flow:column;grid-auto-columns:clamp(230px,26vw,290px);gap:22px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:10px 16px 26px;margin-inline:-16px;scroll-padding-inline:16px;scrollbar-width:thin;scrollbar-color:var(--ink) var(--cream-2)}
-.gal > li{scroll-snap-align:start;display:flex}
-.alb{position:relative;display:flex;flex-direction:column;width:100%;overflow:hidden;transition:transform .25s,box-shadow .25s}
-.alb:hover{transform:translateY(-5px);box-shadow:9px 9px 0 rgba(35,26,16,.18)}
-.alb .cover{position:relative;display:block;width:100%;aspect-ratio:4/3;overflow:hidden;border:0;padding:0;background:var(--cream-2);cursor:zoom-in}
-div.cover{cursor:default}
-.alb .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;transition:transform .4s}
-.alb:hover .cover img{transform:scale(1.06)}
-.gph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--ink-2);background:var(--cream-2);background-image:repeating-linear-gradient(45deg,rgba(242,169,0,.12) 0 12px,transparent 12px 24px)}
-.gph .adk{width:42px;height:42px;color:var(--amber-text)}
-.gph small{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;font-weight:800}
-.alb .badge{position:absolute;top:9px;right:9px;z-index:3;display:inline-flex;align-items:center;gap:5px;background:rgba(35,26,16,.85);color:#fff;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:var(--radius-pill)}
-.alb .badge svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2}
-.alb .cbar{height:8px;width:100%}
-.alb .meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:2px;flex:1}
-.alb .meta h3{font-size:1.08rem}
-.alb .meta .cnt{font-size:.86rem;color:var(--muted);font-weight:700}
-.alb .meta .drv{margin-top:auto;padding-top:10px;display:inline-flex;align-items:center;gap:6px;font-size:.88rem;font-weight:800;text-decoration:none;align-self:flex-start}
-.alb .meta .drv:hover{color:var(--amber-text);text-decoration:underline}
-.alb .meta .drv svg,.galall svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.3}
-.gal-nav{display:flex;gap:10px;justify-content:flex-end;margin-bottom:6px}
-.gal-nav button{width:46px;height:46px;border-radius:50%;border:var(--border);background:var(--paper);box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;transition:transform .18s,box-shadow .18s,opacity .2s}
-.gal-nav button:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
-.gal-nav button:disabled{opacity:.35;cursor:default;box-shadow:none;transform:none}
-.gal-nav svg{width:22px;height:22px;stroke:var(--ink);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.gal-nav[hidden]{display:none}
-.galall{text-align:center;margin-top:18px}
-.galall a{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:.95rem;border:var(--border);background:var(--paper);box-shadow:4px 4px 0 var(--ink);border-radius:var(--radius-pill);padding:11px 22px;text-decoration:none;transition:transform .2s,box-shadow .2s}
-.galall a:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
-.galall[hidden]{display:none}
-.hint{margin-top:14px;font-size:.92rem;color:var(--muted);text-align:center}
+/* ---------- 10. Photos zoomables + lightbox ---------- */
+[data-zoom]{cursor:zoom-in}
+[data-zoom]:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
 
 /* Lightbox <dialog> */
 .lb{border:0;padding:0;margin:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:rgba(20,14,6,.95);color:#fff;overflow:hidden}
@@ -440,7 +409,6 @@ div.cover{cursor:default}
 @keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 @keyframes weave{from{clip-path:inset(0 50% 0 50%);opacity:.3}to{clip-path:inset(0 0 0 0);opacity:1}}
 @keyframes photoZoom{from{transform:scale(1.14)}to{transform:scale(1)}}
-@keyframes tilt{entry 0%{transform:rotate(4deg) scale(.9);opacity:.55}entry 100%,exit 0%{transform:none;opacity:1}exit 100%{transform:rotate(-4deg) scale(.9);opacity:.55}}
 @keyframes ringTurn{from{transform:rotate(-60deg)}to{transform:rotate(30deg)}}
 @keyframes sixFill{from{-webkit-text-stroke-color:rgba(35,26,16,.04);transform:translateY(40px)}to{-webkit-text-stroke-color:rgba(35,26,16,.16);transform:none}}
 @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-30%)}}
@@ -491,7 +459,6 @@ div.cover{cursor:default}
 
     .place .ph img{animation:photoZoom linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
 
-    .gal > li{animation:tilt linear both;animation-timeline:view(inline);animation-range:entry 0% exit 100%}
 
     .sec--qui{view-timeline:--qui block}
     .big-6{animation:sixFill linear both;animation-timeline:--qui;animation-range:entry 10% cover 45%}
@@ -521,7 +488,7 @@ div.cover{cursor:default}
 }
 
 @media print{
-  .site-head,.progress,.cloth,.ticker,.gal-nav,.lb{display:none!important}
+  .site-head,.progress,.cloth,.ticker,.lb{display:none!important}
   .hero,.festival{min-height:0;color:var(--ink);background:none}
   .hero-bg,.festival-bg,.hero::before,.festival::before{display:none}
 }

@@ -13,8 +13,10 @@ périmètre, ne pas la réintroduire.
 
 Le site vitrine (`/`) est un **one-page** (un seul document à scroll natif découpé en sections ancrées, pas de routes séparées pour la
 narration) — porté par le **Club d'anglais**, il raconte le carnet de bord du séjour : une section
-« Parcours » montre les étapes du séjour au fil du temps, et une section « Galerie » montre
-les activités qui s'y sont déroulées. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
+« Parcours » montre les étapes du séjour au fil du temps, et les **photos de la promotion**
+(`public/img/`, zoomables en plein écran via `[data-zoom]`) illustrent les sections. La section
+« Galerie » a été **retirée du one-page** (pas assez de photos par album) ; l'API et la gestion
+`/admin` de la galerie subsistent côté serveur. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
 de comité, plus de connexion par code de comité, plus de réaffectation par l'admin) — hors périmètre,
 ne pas la réintroduire. Le sondage (`/survey`) collecte encore logement, niveau d'anglais, activités,
 talents ; une éventuelle transformation en « livre d'or » (contribution après-séjour) est trackée en
@@ -56,7 +58,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | Chemin | Rôle |
 |---|---|
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
-| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours ou la galerie, ce sont des sections ancrées du même document (`#parcours`, `#galerie`…). CSS/JS de la page dans `public/home.css` / `public/home.js` |
+| `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours, ce sont des sections ancrées du même document (`#parcours`, `#cape-coast`…). CSS/JS de la page dans `public/home.css` / `public/home.js` |
 | `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées. `GET /api/survey-status` (public) reflète l'interrupteur `survey_open` (`Setting`) |
 | `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
 | `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
@@ -90,7 +92,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 
 - **Le site vitrine est un one-page** : `index.html` est un seul document à **scroll natif** (plus de
   deck : ne pas réintercepter molette/clavier/tactile), découpé en `<section id>` ancrées (`#accueil`,
-  `#qui`, `#parcours`, `#galerie`, `#cape-coast`, `#quotidien`, `#ubuntu`, `#festival`). Un nouveau
+  `#qui`, `#parcours`, `#cape-coast`, `#quotidien`, `#ubuntu`, `#festival`). Un nouveau
   contenu narratif est **une section** de ce document, pas une nouvelle route/page — `/survey` et
   `/admin` restent seuls en dehors car ce sont des outils fonctionnels, pas de la narration.
 - **Animations au scroll** : CSS `animation-timeline` sous `@supports`, repli IntersectionObserver qui
