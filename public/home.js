@@ -4,7 +4,7 @@
    - Animations : CSS (animation-timeline) quand le navigateur sait faire ; sinon repli
      IntersectionObserver qui pose .in-view. Le tracé des symboles Adinkra est déclenché par
      .in-view dans tous les navigateurs. Rien de tout ça si prefers-reduced-motion: reduce.
-   - Données : GET /api/journey-stages (parcours), GET /api/gallery (galerie),
+   - Données : GET /api/journey-stages (parcours),
      GET /api/survey-status (lien sondage du pied de page).
    ===================================================================== */
 import * as ADK from '/adinkra.js?v=1';
@@ -85,7 +85,7 @@ function setupMotion() {
   }
 }
 
-/** À rappeler après chaque rendu dynamique (parcours, galerie). */
+/** À rappeler après chaque rendu dynamique (parcours). */
 function watch(root = document) {
   hydrateAll(root);
   $$('[data-stagger]', root).forEach((g) => {
@@ -245,119 +245,51 @@ function drawLine() {
 }
 
 /* =====================================================================
-   GALERIE — albums (GET /api/gallery), gérés depuis /admin ; lightbox en <dialog>.
+   PHOTOS — toute image [data-zoom] s'ouvre en plein écran (lightbox <dialog>),
+   avec navigation entre les photos de la page.
    ===================================================================== */
-const CAMERA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
-const FOLDER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 3h10v9H3z"/></svg>';
-
-function setupGallery() {
-  const shelf = $('#galShelf');
-  if (!shelf) return Promise.resolve();
-  const wrap = shelf.closest('.gal-wrap');
-  const state = $('[data-state]', wrap);
-  const nav = $('.gal-nav', wrap);
-  let ALBUMS = [];
-
-  /* --- lightbox --- */
+function setupZoom() {
   const lb = $('#lb');
+  const pics = $$('img[data-zoom]');
+  if (!lb || !pics.length) return;
   const lImg = $('img', lb);
   const lCap = $('.lcap', lb);
-  let cur = [], ci = 0, opener = null, curTitle = '';
+  let ci = 0, opener = null;
   const show = () => {
-    const p = cur[ci];
-    lImg.src = p.src;
-    lImg.alt = p.cap || curTitle;
-    lCap.textContent = (p.cap || '') + (cur.length > 1 ? '  ·  ' + (ci + 1) + '/' + cur.length : '');
+    const p = pics[ci];
+    lImg.src = p.currentSrc || p.src;
+    lImg.alt = p.alt;
+    lCap.textContent = p.alt + '  ·  ' + (ci + 1) + '/' + pics.length;
   };
   const onClosed = () => { lImg.removeAttribute('src'); if (opener && opener.focus) opener.focus(); };
-  const openAlb = (ai, btn) => {
-    const a = ALBUMS[ai] || {};
-    cur = a.photos || [];
-    if (!cur.length) return;
-    ci = 0; curTitle = a.title || ''; opener = btn;
-    lb.setAttribute('aria-label', 'Album « ' + curTitle + ' »');
-    $$('.lnav', lb).forEach((b) => { b.hidden = cur.length < 2; });
+  const openAt = (i) => {
+    ci = i; opener = pics[i];
     show();
     if (typeof lb.showModal === 'function') lb.showModal(); else lb.setAttribute('open', '');
   };
-  const closeAlb = () => {
+  const closeLb = () => {
     if (typeof lb.close === 'function') { if (lb.open) lb.close(); } else { lb.removeAttribute('open'); onClosed(); }
   };
-  const step = (dlt) => { ci = (ci + dlt + cur.length) % cur.length; show(); };
+  const step = (d) => { ci = (ci + d + pics.length) % pics.length; show(); };
   lb.addEventListener('close', onClosed);
-  $('.lx', lb).addEventListener('click', closeAlb);
+  $('.lx', lb).addEventListener('click', closeLb);
   $('.lprev', lb).addEventListener('click', () => step(-1));
   $('.lnext', lb).addEventListener('click', () => step(1));
-  lb.addEventListener('click', (e) => { if (e.target === lb || e.target.tagName === 'FIGURE') closeAlb(); });
+  lb.addEventListener('click', (e) => { if (e.target === lb || e.target.tagName === 'FIGURE') closeLb(); });
   lb.addEventListener('keydown', (e) => {
     // Repli sans showModal (vieux Safari) : Échap n'est pas géré nativement.
-    if (e.key === 'Escape' && typeof lb.showModal !== 'function') { closeAlb(); return; }
-    if (cur.length < 2) return;
+    if (e.key === 'Escape' && typeof lb.showModal !== 'function') { closeLb(); return; }
     if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
   });
-  shelf.addEventListener('click', (e) => {
-    const c = e.target.closest('.cover[data-alb]');
-    if (c) openAlb(+c.getAttribute('data-alb'), c);
-  });
-
-  /* --- bande défilante : boutons précédent / suivant --- */
-  const prevB = $('.gal-prev', nav), nextB = $('.gal-next', nav);
-  const syncNav = () => {
-    const over = shelf.scrollWidth > shelf.clientWidth + 4;
-    nav.hidden = !over;
-    if (!over) return;
-    prevB.disabled = shelf.scrollLeft <= 4;
-    nextB.disabled = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 4;
-  };
-  const by = (dir) => shelf.scrollBy({ left: dir * shelf.clientWidth * 0.85, behavior: RM ? 'auto' : 'smooth' });
-  prevB.addEventListener('click', () => by(-1));
-  nextB.addEventListener('click', () => by(1));
-  shelf.addEventListener('scroll', syncNav, { passive: true });
-  window.addEventListener('resize', syncNav, { passive: true });
-
-  function render() {
-    shelf.innerHTML = ALBUMS.map((a, ai) => {
-      const n = a.photos.length, hasDrive = a.drive && a.drive !== '#';
-      const cnt = n ? (n + ' photo' + (n > 1 ? 's' : '')) : 'En attente de clichés';
-      const badge = n ? '<span class="badge" aria-hidden="true">' + CAMERA + n + '</span>' : '';
-      const cover = n
-        ? '<button type="button" class="cover" data-alb="' + ai + '" aria-label="Ouvrir l\'album « ' + esc(a.title) + ' » en plein écran (' + cnt + ')">' +
-            '<span class="gph" aria-hidden="true">' + adinkraSVG('duafe') + '<small>Chargement…</small></span>' +
-            '<img src="' + esc(a.photos[0].src) + '" alt="" loading="lazy" decoding="async"></button>'
-        : '<div class="cover" aria-hidden="true"><span class="gph">' + adinkraSVG('duafe') + '<small>Photos à venir</small></span></div>';
-      return '<li><article class="card alb">' + badge + cover +
-        '<div class="cbar" style="background:' + esc(a.color) + '"></div>' +
-        '<div class="meta"><h3>' + esc(a.title) + '</h3>' +
-        '<span class="cnt">' + cnt + '</span>' +
-        (hasDrive
-          ? '<a class="drv" href="' + esc(a.drive) + '" target="_blank" rel="noopener">' + FOLDER + 'Album Drive<span class="sr-only"> : ' + esc(a.title) + ' (nouvel onglet)</span></a>'
-          : '') +
-        '</div></article></li>';
-    }).join('');
-    $$('.cover img', shelf).forEach((img) => img.addEventListener('error', () => {
-      const small = img.previousElementSibling && img.previousElementSibling.querySelector('small');
-      if (small) small.textContent = 'Photo manquante';
-      img.remove();
-    }));
-    watch(shelf);
-    syncNav();
-  }
-
-  return getJSON('/api/gallery').then((d) => {
-    if (!d || !d.ok) throw new Error('réponse invalide');
-    ALBUMS = (d.albums || []).map((a) => ({ title: a.title, color: a.color || '#e85d1b', drive: a.drive_url || '#', photos: a.photos || [] }));
-    if (ALBUMS.length) { render(); setState(state, 'none'); }
-    else { shelf.innerHTML = ''; setState(state, 'empty', 'Les albums arrivent bientôt — reviens après nos prochaines sorties !', 'duafe'); }
-    const all = $('#galAll'), u = (d.drive_all || '').trim();
-    if (all) {
-      const box = all.closest('.galall');
-      if (u) { all.href = u; all.target = '_blank'; all.rel = 'noopener'; if (box) box.hidden = false; }
-      else if (box) box.hidden = true;
-    }
-  }).catch(() => {
-    shelf.innerHTML = '';
-    setState(state, 'error', 'Impossible de charger la galerie pour le moment.', 'duafe');
+  pics.forEach((img, i) => {
+    img.tabIndex = 0;
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', 'Agrandir la photo : ' + img.alt);
+    img.addEventListener('click', () => openAt(i));
+    img.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAt(i); }
+    });
   });
 }
 
@@ -485,8 +417,10 @@ if (tlBox && 'ResizeObserver' in window) {
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawLine);
 
-Promise.allSettled([loadStages(), setupGallery()]).then(() => {
-  // Arrivée sur une ancre (#galerie…) : le contenu chargé au-dessus a pu décaler la page.
+setupZoom();
+
+Promise.allSettled([loadStages()]).then(() => {
+  // Arrivée sur une ancre (#cape-coast…) : le contenu chargé au-dessus a pu décaler la page.
   if (!initialHash || userMoved) return;
   let target = null;
   try { target = document.getElementById(decodeURIComponent(initialHash.slice(1))); } catch (e) { /* ancre invalide */ }

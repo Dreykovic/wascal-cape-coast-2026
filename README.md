@@ -4,8 +4,8 @@ Boîte à outils pour le programme **WASCAL Cape Coast 2026** : 32 étudiants et
 8 délégations francophones d'Afrique de l'Ouest, 16 semaines d'anglais au Ghana.
 
 Trois piliers : **programme des cours**, **rappels**, **activités**. Le site vitrine (`/`) est un
-**one-page**, carnet de bord du séjour porté par le **Club d'anglais** : chronologie du parcours et
-galerie photo des activités vécues, en sections du même deck. Il n'y a pas de fonctionnalité
+**one-page**, carnet de bord du séjour porté par le **Club d'anglais** : chronologie du parcours,
+illustrée par les photos de la promotion, en sections d'un même document. Il n'y a pas de fonctionnalité
 « devoirs / homework » — hors périmètre du projet.
 
 Ce dépôt est le portage Laravel d'une app Node/Fastify d'origine, désormais archivée dans
@@ -18,9 +18,9 @@ Ce dépôt est le portage Laravel d'une app Node/Fastify d'origine, désormais a
 - **Front** : HTML/CSS/JS vanilla, **aucun bundler, aucune étape de build**. Les pages
   (`resources/pages/*.html`) sont servies statiquement, pas en Blade.
 - Les URL d'API reprennent celles de l'app Node d'origine pour ce qui subsiste (`/api/responses`,
-  `/api/gallery`, `/api/admin/*`) ; `/api/journey-stages` est propre à ce portage.
+  `/api/admin/*`) ; `/api/journey-stages` est propre à ce portage.
 
-Le détail de l'architecture, des conventions et du cœur fonctionnel (parcours + galerie) est
+Le détail de l'architecture, des conventions et du cœur fonctionnel (parcours + photos) est
 documenté dans [`CLAUDE.md`](CLAUDE.md).
 
 ## Démarrage rapide

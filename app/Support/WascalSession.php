@@ -4,7 +4,7 @@ namespace App\Support;
 
 // Rôle porté par la session Laravel (équivalent du cookie signé de l'app Node).
 // Un seul rôle depuis le retrait des comités : 'super' = super-admin, qui voit/édite tout
-// (galerie, étapes du parcours, réponses au sondage). Pas de compte scopé par comité.
+// (étapes du parcours, réponses au sondage). Pas de compte scopé par comité.
 class WascalSession
 {
     public static function role(): ?string

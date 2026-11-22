@@ -13,7 +13,7 @@ class JourneyStageController extends Controller
     // GET /api/journey-stages — publique.
     public function index(): JsonResponse
     {
-        $owners = collect(config('wascal.gallery_owners'))->keyBy('key');
+        $owners = collect(config('wascal.activity_tags'))->keyBy('key');
 
         $stages = JourneyStage::query()
             ->orderBy('sort_order')
@@ -100,7 +100,7 @@ class JourneyStageController extends Controller
     private function validTagOrNull($tag): ?string
     {
         $tag = (string) $tag;
-        $keys = array_column(config('wascal.gallery_owners'), 'key');
+        $keys = array_column(config('wascal.activity_tags'), 'key');
 
         return in_array($tag, $keys, true) ? $tag : null;
     }

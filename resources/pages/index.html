@@ -31,10 +31,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500;1,9..144,900&amp;family=Hanken+Grotesk:wght@400;600;700;800&amp;display=swap" rel="stylesheet" />
-<link rel="preload" as="image" href="/img/cape-coast-castle.jpg" fetchpriority="high" />
-<link rel="stylesheet" href="/home.css?v=1" />
+<link rel="preload" as="image" href="/img/hero-plage.jpg" imagesrcset="/img/hero-plage-800.jpg 800w, /img/hero-plage.jpg 1800w" imagesizes="100vw" fetchpriority="high" />
+<link rel="stylesheet" href="/home.css?v=3" />
 <noscript><style>[data-state]{display:none}</style></noscript>
-<script type="module" src="/home.js?v=1"></script>
+<script type="module" src="/home.js?v=3"></script>
 </head>
 <body>
 <a class="skip" href="#contenu">Aller au contenu</a>
@@ -51,8 +51,8 @@
       <ul>
         <li><a href="#qui">Qui sommes-nous</a></li>
         <li><a href="#parcours">Parcours</a></li>
-        <li><a href="#galerie">Galerie</a></li>
         <li><a href="#cape-coast">Cape Coast</a></li>
+        <li><a href="#images">En images</a></li>
         <li><a href="#quotidien">Quotidien</a></li>
         <li><a href="#ubuntu">Ubuntu</a></li>
         <li><a href="#festival">Festival</a></li>
@@ -65,7 +65,7 @@
 
   <!-- ===== ACCUEIL ===== -->
   <section class="hero" id="accueil" aria-labelledby="t-accueil">
-    <img class="hero-bg" fetchpriority="high" src="/img/cape-coast-castle.jpg" width="1280" height="961" alt="Le château de Cape Coast au bord de l'océan, Ghana">
+    <img class="hero-bg" fetchpriority="high" src="/img/hero-plage.jpg" srcset="/img/hero-plage-800.jpg 800w, /img/hero-plage.jpg 1800w" sizes="100vw" width="1800" height="1350" alt="Le groupe de la promotion posant sur la plage de Cape Coast, face à l'océan">
     <div class="hero-inner"><div class="wrap hero-grid">
       <div>
         <p class="tag">Le carnet de bord · Club d'anglais</p>
@@ -107,6 +107,11 @@
         </div>
         <svg class="adk emblem" data-adinkra="akomantoso" aria-hidden="true" focusable="false"></svg>
       </div>
+
+      <figure class="photo-feature rv rv-z">
+        <img data-zoom loading="lazy" decoding="async" src="/img/groupe-promo.jpg" srcset="/img/groupe-promo-800.jpg 800w, /img/groupe-promo.jpg 1400w" sizes="(min-width:1100px) 1040px, 100vw" width="1400" height="1400" alt="Photo de groupe de la promotion avec les enseignants et le personnel sur le campus de l'University of Cape Coast">
+        <figcaption>La promotion et l'équipe encadrante, réunies sur le campus.</figcaption>
+      </figure>
 
       <div class="masters">
         <article class="card master master--a rv rv-l">
@@ -174,42 +179,7 @@
     </div>
   </section>
 
-  <div class="cloth cloth--gold" data-cloth="duafe nsoromma akoma" aria-hidden="true"><div class="cloth-row"></div></div>
-
-  <!-- ===== GALERIE ===== -->
-  <section class="sec sec--galerie" id="galerie" aria-labelledby="t-galerie">
-    <div class="wrap">
-      <div class="sec-head">
-        <div>
-          <p class="over"><svg class="adk adk-em" aria-hidden="true" focusable="false" data-adinkra="duafe"></svg>Nos souvenirs</p>
-          <h2 id="t-galerie">La galerie du groupe</h2>
-        </div>
-        <svg class="adk emblem" data-adinkra="duafe" aria-hidden="true" focusable="false"></svg>
-      </div>
-
-      <div class="gal-wrap">
-        <div class="gal-nav" hidden>
-          <button type="button" class="gal-prev" aria-controls="galShelf" aria-label="Albums précédents"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <button type="button" class="gal-next" aria-controls="galShelf" aria-label="Albums suivants"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
-        </div>
-        <ul class="gal" id="galShelf" aria-label="Albums photo"></ul>
-        <div class="state" role="status" data-state>
-          <svg class="adk adk-loading" data-adinkra="duafe" aria-hidden="true" focusable="false"></svg>
-          <p>Chargement des albums…</p>
-        </div>
-        <noscript><p class="state">Active JavaScript pour afficher les albums photo.</p></noscript>
-      </div>
-      <div class="galall" hidden>
-        <a id="galAll" href="#">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 3h10v9H3z"/></svg>
-          Voir l'album complet du groupe (Google Drive)
-        </a>
-      </div>
-      <p class="hint">Clique ou touche une couverture pour l'ouvrir en plein écran ; le lien Drive de chaque album mène à toutes les photos de l'activité.</p>
-    </div>
-  </section>
-
-  <dialog class="lb" id="lb" aria-label="Photos de l'album">
+  <dialog class="lb" id="lb" aria-label="Photos du séjour">
     <figure><img alt=""><figcaption class="lcap" aria-live="polite"></figcaption></figure>
     <button type="button" class="lx" aria-label="Fermer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <button type="button" class="lnav lprev" aria-label="Photo précédente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -230,9 +200,91 @@
         <svg class="adk emblem" data-adinkra="nyamedua" aria-hidden="true" focusable="false"></svg>
       </div>
       <div class="places" data-stagger>
-        <figure class="card place rv"><div class="ph"><img loading="lazy" decoding="async" src="/img/cape-coast-castle.jpg" width="1280" height="961" alt="Le château de Cape Coast, murs blancs face à l'océan"></div><figcaption><b>Château de Cape Coast</b><span>Site classé UNESCO, juste à côté.</span></figcaption></figure>
-        <figure class="card place rv"><div class="ph"><img loading="lazy" decoding="async" src="/img/kakum-canopy.jpg" width="1280" height="853" alt="Passerelle suspendue dans la canopée du parc de Kakum"></div><figcaption><b>Parc national de Kakum</b><span>Les passerelles dans la canopée.</span></figcaption></figure>
-        <figure class="card place rv"><div class="ph"><img loading="lazy" decoding="async" src="/img/elmina-castle.jpg" width="1280" height="961" alt="Le château St. George d'Elmina"></div><figcaption><b>Château d'Elmina</b><span>Forteresse historique, à 15 minutes.</span></figcaption></figure>
+        <figure class="card place rv"><div class="ph"><img data-zoom loading="lazy" decoding="async" src="/img/chateau-groupe.jpg" srcset="/img/chateau-groupe-800.jpg 800w, /img/chateau-groupe.jpg 1280w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" width="1280" height="960" alt="Des membres de la promotion posant dans la cour du château de Cape Coast"></div><figcaption><b>Château de Cape Coast</b><span>Site classé UNESCO, juste à côté.</span></figcaption></figure>
+        <figure class="card place rv"><div class="ph"><img data-zoom loading="lazy" decoding="async" src="/img/kakum-passerelle.jpg" srcset="/img/kakum-passerelle-800.jpg 800w, /img/kakum-passerelle.jpg 1280w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" width="1280" height="960" alt="Passerelle suspendue au-dessus de la forêt du parc de Kakum"></div><figcaption><b>Parc national de Kakum</b><span>Les passerelles dans la canopée.</span></figcaption></figure>
+        <figure class="card place rv"><div class="ph"><img data-zoom loading="lazy" decoding="async" src="/img/campus-allee.jpg" srcset="/img/campus-allee-800.jpg 800w, /img/campus-allee.jpg 1280w" sizes="(min-width:900px) 33vw, (min-width:600px) 50vw, 100vw" width="1280" height="960" alt="Allée bordée de haies sur le campus de l'University of Cape Coast"></div><figcaption><b>Le campus de l'UCC</b><span>Notre terrain de jeu au quotidien.</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <div class="cloth cloth--gold" data-cloth="duafe nsoromma akoma" aria-hidden="true"><div class="cloth-row"></div></div>
+
+  <!-- ===== EN IMAGES ===== -->
+  <section class="sec sec--images" id="images" aria-labelledby="t-images">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <p class="over"><svg class="adk adk-em" aria-hidden="true" focusable="false" data-adinkra="duafe"></svg>Nos souvenirs</p>
+          <h2 id="t-images">Le séjour en images</h2>
+          <p class="lead">De la plage aux tambours, du campus à la canopée de Kakum : nos photos, chapitre par chapitre. Touche une photo pour l'agrandir.</p>
+        </div>
+        <svg class="adk emblem" data-adinkra="duafe" aria-hidden="true" focusable="false"></svg>
+      </div>
+      <nav class="chap-nav" aria-label="Chapitres photo">
+        <a href="#img-plage">La plage</a><a href="#img-campus">Le campus</a><a href="#img-chateau">Le château</a><a href="#img-kakum">Kakum</a><a href="#img-culture">Culture</a><a href="#img-soirs">Fins de journée</a>
+      </nav>
+
+      <div class="chap" id="img-plage">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="esenetekrema" aria-hidden="true" focusable="false"></svg>La plage</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/plage-groupe-600.jpg" srcset="/img/plage-groupe-600.jpg 600w, /img/plage-groupe.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Une partie de la promotion réunie sur la plage de Cape Coast"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/plage-vagues-600.jpg" srcset="/img/plage-vagues-600.jpg 600w, /img/plage-vagues.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Quatre camarades dans les vagues, au bord de l&#x27;océan"></li>
+        </ul>
+      </div>
+
+      <div class="chap" id="img-campus">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="neaonnim" aria-hidden="true" focusable="false"></svg>Le campus de l’UCC</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/cour-mosaique-600.jpg" srcset="/img/cour-mosaique-600.jpg 600w, /img/cour-mosaique.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="La cour du département et sa mosaïque colorée"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/salle-cours-600.jpg" srcset="/img/salle-cours-600.jpg 600w, /img/salle-cours.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Une séance de cours, diapositives projetées au tableau"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-groupe-600.jpg" srcset="/img/campus-groupe-600.jpg 600w, /img/campus-groupe.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Un petit groupe souriant devant un bâtiment du campus"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-batiment-600.jpg" srcset="/img/campus-batiment-600.jpg 600w, /img/campus-batiment.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Bâtiment à coursives et jardin intérieur du campus"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-marche-600.jpg" srcset="/img/campus-marche-600.jpg 600w, /img/campus-marche.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Retour à pied vers la résidence sur une route du campus"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-allee-arbres-600.jpg" srcset="/img/campus-allee-arbres-600.jpg 600w, /img/campus-allee-arbres.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Une allée ombragée par les grands arbres du campus"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-administration-600.jpg" srcset="/img/campus-administration-600.jpg 600w, /img/campus-administration.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="675" alt="Le grand bâtiment administratif de l&#x27;université"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-canopee-600.jpg" srcset="/img/campus-canopee-600.jpg 600w, /img/campus-canopee.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Le soleil à travers le feuillage, vu d&#x27;en dessous"></li>
+        </ul>
+      </div>
+
+      <div class="chap" id="img-chateau">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="nyamedua" aria-hidden="true" focusable="false"></svg>Le château de Cape Coast</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/chateau-cour-600.jpg" srcset="/img/chateau-cour-600.jpg 600w, /img/chateau-cour.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="La promotion rassemblée dans la cour du château"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/chateau-murs-600.jpg" srcset="/img/chateau-murs-600.jpg 600w, /img/chateau-murs.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Les murs blancs du château et le groupe au centre de la cour"></li>
+        </ul>
+      </div>
+
+      <div class="chap" id="img-kakum">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="dwennimmen" aria-hidden="true" focusable="false"></svg>La forêt de Kakum</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/kakum-arrivee-600.jpg" srcset="/img/kakum-arrivee-600.jpg 600w, /img/kakum-arrivee.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Le groupe sous l&#x27;arche « I survived the Kakum canopy walkway »"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/kakum-foret-600.jpg" srcset="/img/kakum-foret-600.jpg 600w, /img/kakum-foret.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="La passerelle suspendue qui serpente au-dessus de la forêt"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/kakum-cimes-600.jpg" srcset="/img/kakum-cimes-600.jpg 600w, /img/kakum-cimes.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Les cimes de la forêt tropicale de Kakum"></li>
+        </ul>
+      </div>
+
+      <div class="chap" id="img-culture">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="sankofa" aria-hidden="true" focusable="false"></svg>Tambours et culture</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/culture-pagnes-600.jpg" srcset="/img/culture-pagnes-600.jpg 600w, /img/culture-pagnes.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Pagnes kente et grand tambour lors de la journée culturelle"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/culture-tambours-600.jpg" srcset="/img/culture-tambours-600.jpg 600w, /img/culture-tambours.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Les tambours alignés sur la pelouse du département"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/culture-danse-600.jpg" srcset="/img/culture-danse-600.jpg 600w, /img/culture-danse.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Danse et percussions dans la cour du département"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/culture-musiciens-600.jpg" srcset="/img/culture-musiciens-600.jpg 600w, /img/culture-musiciens.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Les musiciens installés à l&#x27;ombre, xylophone et tambours"></li>
+        </ul>
+      </div>
+
+      <div class="chap" id="img-soirs">
+        <h3 class="chap-t"><svg class="adk adk-em" data-adinkra="nsoromma" aria-hidden="true" focusable="false"></svg>Résidence et fins de journée</h3>
+        <ul class="mosaic" data-stagger>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/soir-coucher-600.jpg" srcset="/img/soir-coucher-600.jpg 600w, /img/soir-coucher.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Le soleil qui se couche derrière la végétation"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/residence-couloir-600.jpg" srcset="/img/residence-couloir-600.jpg 600w, /img/residence-couloir.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Le couloir de brique de la résidence"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/residence-balcon-600.jpg" srcset="/img/residence-balcon-600.jpg 600w, /img/residence-balcon.jpg 675w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="675" height="1200" alt="Un oiseau posé sur la rambarde du balcon de la résidence"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/soir-nuages-600.jpg" srcset="/img/soir-nuages-600.jpg 600w, /img/soir-nuages.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Nuages du soir au-dessus des haies et des bâtiments"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/stade-600.jpg" srcset="/img/stade-600.jpg 600w, /img/stade.jpg 1200w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="1200" height="900" alt="Le stade d&#x27;athlétisme et ses gradins bleus"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-palmiers-600.jpg" srcset="/img/campus-palmiers-600.jpg 600w, /img/campus-palmiers.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="Palmiers et pelouse verte sous le ciel bleu"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/nuit-clocher-600.jpg" srcset="/img/nuit-clocher-600.jpg 600w, /img/nuit-clocher.jpg 675w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="675" height="1200" alt="Un clocher illuminé à la tombée de la nuit"></li>
+          <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/nuit-route-600.jpg" srcset="/img/nuit-route-600.jpg 600w, /img/nuit-route.jpg 900w" sizes="(min-width:900px) 31vw, (min-width:600px) 46vw, 92vw" width="900" height="1200" alt="La route bordée d&#x27;arbres, éclairée par un lampadaire la nuit"></li>
+        </ul>
       </div>
     </div>
   </section>
@@ -274,6 +326,13 @@
         </ul>
         <ul class="when"><li>Mardi · 16h</li><li>1h30</li><li lang="en">100% English</li><li>French Jar → sorties</li></ul>
       </div>
+
+      <ul class="strip" data-stagger aria-label="Notre cadre de vie à Cape Coast">
+        <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/residence.jpg" width="800" height="1000" alt="La résidence en brique rouge, vue de jour"></li>
+        <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/cour-nuit.jpg" width="800" height="1000" alt="La cour du campus éclairée à la tombée de la nuit"></li>
+        <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/cour-geologie.jpg" width="800" height="600" alt="La cour du département avec ses bancs et sa mosaïque colorée"></li>
+        <li class="rv"><img data-zoom loading="lazy" decoding="async" src="/img/campus-route.jpg" width="800" height="1000" alt="Route du campus bordée d'arbres"></li>
+      </ul>
 
       <div class="sub-head">
         <p class="over"><svg class="adk adk-em" aria-hidden="true" focusable="false" data-adinkra="dwennimmen"></svg>Notre quotidien</p>
@@ -328,6 +387,9 @@
             <text x="160" y="176" font-size="10" font-weight="700" text-anchor="middle" fill="#e0a93f" letter-spacing="2.5">6TH BATCH</text>
           </svg>
           <p class="ring-cap">8 délégations · une promotion · un seul cercle</p>
+          <figure class="photo-feature photo-feature--dark">
+            <img data-zoom loading="lazy" decoding="async" src="/img/groupe-plage.jpg" srcset="/img/groupe-plage-800.jpg 800w, /img/groupe-plage.jpg 1200w" sizes="(min-width:900px) 45vw, 100vw" width="1200" height="900" alt="Les étudiant·e·s serrés les un·e·s contre les autres sur la plage">
+          </figure>
         </div>
       </div>
     </div>
@@ -335,7 +397,7 @@
 
   <!-- ===== FESTIVAL (clôture) ===== -->
   <section class="festival on-dark" id="festival" aria-labelledby="t-festival">
-    <img class="festival-bg" loading="lazy" decoding="async" src="/img/kakum-canopy.jpg" width="1280" height="853" alt="">
+    <img class="festival-bg" loading="lazy" decoding="async" src="/img/festival-tambours.jpg" srcset="/img/festival-tambours-800.jpg 800w, /img/festival-tambours.jpg 1800w" sizes="100vw" width="1800" height="1350" alt="">
     <div class="wrap sec">
       <svg class="adk adk-close" data-adinkra="sankofa" aria-hidden="true" focusable="false"></svg>
       <p class="over rv"><svg class="adk adk-em" aria-hidden="true" focusable="false" data-adinkra="sankofa"></svg>Le point d'orgue</p>
@@ -370,8 +432,8 @@
         <ul>
           <li><a href="#qui">Qui sommes-nous</a></li>
           <li><a href="#parcours">Notre parcours</a></li>
-          <li><a href="#galerie">La galerie</a></li>
           <li><a href="#cape-coast">Cape Coast</a></li>
+          <li><a href="#images">Le séjour en images</a></li>
           <li><a href="#festival">Le Festival des cultures</a></li>
         </ul>
       </nav>
@@ -384,7 +446,7 @@
       </div>
     </div>
     <div class="credits">
-      <p>Photos : Wikimedia Commons, CC BY-SA 3.0 — Cape Coast &amp; Elmina <a href="https://commons.wikimedia.org/wiki/File:Cape_Coast_Castle,_Cape_Coast,_Ghana.JPG">Rjruiziii</a>, Kakum <a href="https://commons.wikimedia.org/wiki/File:Kakum_Canopy_Walk,_Kakum_National_Park,_Ghana.JPG">Benggriff</a>.</p>
+      <p>Photos : la promotion WASCAL 6th batch, Cape Coast 2026.</p>
       <p><a href="#top">Revenir en haut</a></p>
     </div>
   </div>

@@ -18,8 +18,6 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
-/public/uploads/*
-!/public/uploads/.gitkeep
 /database/*.sqlite
 /database/*.sqlite-journal
 /storage/*.key
@@ -37,3 +35,4 @@ Thumbs.db
 /archive/files/.remember/
 /archive/files/public/images/*
 !/archive/files/public/images/LISEZ-MOI.txt
+public/pictures/

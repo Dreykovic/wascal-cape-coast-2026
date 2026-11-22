@@ -35,9 +35,9 @@ export function flagSVG(country, w = 30) {
   return `<svg class="flag" viewBox="0 0 48 32" width="${w}" height="${h}" role="img" aria-label="${country}">${FLAGS[country] || ""}</svg>`;
 }
 
-// Étiquettes d'activité : catégorisent les albums de la galerie et les étapes du parcours.
-// La clé (slug) doit rester alignée avec config('wascal.gallery_owners') côté serveur.
-export const GALLERY_OWNERS = [
+// Étiquettes d'activité : catégorisent les étapes du parcours.
+// La clé (slug) doit rester alignée avec config('wascal.activity_tags') côté serveur.
+export const ACTIVITY_TAGS = [
   { key: "club",    name: "Club d'anglais",       color: "#f2a900", emoji: "📣" },
   { key: "sorties", name: "Sorties & Excursions", color: "#0e8c7a", emoji: "🌳" },
   { key: "soirees", name: "Soirées & Jeux",       color: "#8a2d5d", emoji: "🎉" },
