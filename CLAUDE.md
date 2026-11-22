@@ -80,14 +80,16 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 - **Étiquettes** : `config('wascal.activity_tags')` (miroir `ACTIVITY_TAGS` de `public/shared.js`) —
   Club d'anglais + 4 étiquettes de couleur, posées sur les étapes du parcours (`journey_stages.tag`).
 - **Photos** : fichiers statiques versionnés dans `public/img/` (JPG optimisés + variantes `-800`
-  pour `srcset`), placés directement dans `index.html` ; `[data-zoom]` les ouvre en plein écran.
-  Les originaux (HEIC) restent hors dépôt (`public/pictures/` est ignoré).
+  ou `-600` pour `srcset`), placés directement dans `index.html` ; `[data-zoom]` les ouvre en plein
+  écran. La section `#images` (« Le séjour en images ») est une **mosaïque statique par chapitres**
+  (plage, campus, château, Kakum, culture, fins de journée) : ajouter une photo = un `<li>` dans le
+  bon chapitre, pas de base ni d'admin. Les originaux (HEIC) restent hors dépôt (`public/pictures/` ignoré).
 
 ## Conventions
 
 - **Le site vitrine est un one-page** : `index.html` est un seul document à **scroll natif** (plus de
   deck : ne pas réintercepter molette/clavier/tactile), découpé en `<section id>` ancrées (`#accueil`,
-  `#qui`, `#parcours`, `#cape-coast`, `#quotidien`, `#ubuntu`, `#festival`). Un nouveau
+  `#qui`, `#parcours`, `#cape-coast`, `#images`, `#quotidien`, `#ubuntu`, `#festival`). Un nouveau
   contenu narratif est **une section** de ce document, pas une nouvelle route/page — `/survey` et
   `/admin` restent seuls en dehors car ce sont des outils fonctionnels, pas de la narration.
 - **Animations au scroll** : CSS `animation-timeline` sous `@supports`, repli IntersectionObserver qui

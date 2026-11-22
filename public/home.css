@@ -511,3 +511,18 @@ main:focus{outline:none}
 .strip img{width:100%;height:100%;object-fit:cover;display:block}
 .strip li::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--kente)}
 @media (max-width:899px){.strip{grid-template-columns:1fr 1fr}.strip li:nth-child(even){transform:none}}
+
+/* ===== Le séjour en images : mosaïque par chapitres ===== */
+.sec--images{--sec-c:var(--blue)}
+.chap-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 var(--space-6)}
+.chap-nav a{font-weight:800;font-size:.88rem;text-decoration:none;border:var(--border);background:var(--paper);border-radius:var(--radius-pill);padding:7px 15px;box-shadow:3px 3px 0 var(--ink);transition:transform .18s,box-shadow .18s}
+.chap-nav a:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.chap{margin-top:var(--space-7);scroll-margin-top:90px}
+.chap:first-of-type{margin-top:0}
+.chap-t{display:flex;align-items:center;gap:10px;font-size:var(--step-2,1.5rem);margin-bottom:16px}
+.mosaic{list-style:none;padding:0;margin:0;columns:3 240px;column-gap:14px}
+.mosaic li{break-inside:avoid;margin:0 0 14px;border-radius:14px;overflow:hidden;background:var(--cream-2);position:relative;box-shadow:5px 5px 0 rgba(35,26,16,.12)}
+.mosaic img{display:block;width:100%;height:auto;transition:transform .4s var(--ease-out,ease)}
+.mosaic li:hover img{transform:scale(1.04)}
+.mosaic li::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--kente)}
+@media (max-width:599px){.mosaic{columns:2 140px;column-gap:10px}.mosaic li{margin-bottom:10px;border-radius:10px}}
