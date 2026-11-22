@@ -14,9 +14,9 @@ périmètre, ne pas la réintroduire.
 Le site vitrine (`/`) est un **one-page** (un seul document à scroll natif découpé en sections ancrées, pas de routes séparées pour la
 narration) — porté par le **Club d'anglais**, il raconte le carnet de bord du séjour : une section
 « Parcours » montre les étapes du séjour au fil du temps, et les **photos de la promotion**
-(`public/img/`, zoomables en plein écran via `[data-zoom]`) illustrent les sections. La section
-« Galerie » a été **retirée du one-page** (pas assez de photos par album) ; l'API et la gestion
-`/admin` de la galerie subsistent côté serveur. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
+(`public/img/`, zoomables en plein écran via `[data-zoom]`) illustrent les sections. Il n'y a **pas** de
+galerie d'albums (retirée : pas assez de photos par album ; tables supprimées par la migration
+`drop_gallery_tables`, plus d'upload de photos) — hors périmètre, ne pas la réintroduire. Il n'y a **pas** de fonctionnalité « comités / répartition » (retirée : sondage sans choix
 de comité, plus de connexion par code de comité, plus de réaffectation par l'admin) — hors périmètre,
 ne pas la réintroduire. Le sondage (`/survey`) collecte encore logement, niveau d'anglais, activités,
 talents ; une éventuelle transformation en « livre d'or » (contribution après-séjour) est trackée en
@@ -34,9 +34,8 @@ sans VPS, sans Node). Le **front est réutilisé tel quel** ; seule la couche se
   en Blade — leur JS inline entrerait en conflit avec `{{ }}`. Les assets partagés `public/app.css` et
   `public/shared.js` (module ES) sont servis au web root, aux mêmes chemins que dans l'app d'origine.
 - Le levier du portage : **URL d'API identiques** à l'app Node d'origine pour ce qui subsiste
-  (`/api/responses`, `/api/gallery`, `/api/admin/*`, `/api/gallery/*`) → ce front fonctionne sans
-  modification. Le concept de comités (et ses routes `/comite`, `/api/comite/*`) a été retiré du
-  portage ; `/api/journey-stages` est propre à Laravel, sans équivalent Node — consommé par la
+  (`/api/responses`, `/api/admin/*`) → ce front fonctionne sans modification. Les comités (routes
+  `/comite`, `/api/comite/*`) et la galerie (`/api/gallery*`) ont été retirés du portage ; `/api/journey-stages` est propre à Laravel, sans équivalent Node — consommé par la
   section « Parcours » du one-page (`index.html`), pas par une route séparée.
 
 ## Commandes
@@ -60,33 +59,29 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 | `routes/web.php` | Toutes les routes (pages + API). `/api/*` est **exempté de CSRF** (`bootstrap/app.php`) car ce sont des appels JSON `fetch`, comme l'app Node. |
 | `app/Http/Controllers/PageController.php` | Sert `/`, `/survey`, `/admin` = fichiers `resources/pages/*.html`. `/` est un **one-page** : pas de route dédiée pour le parcours, ce sont des sections ancrées du même document (`#parcours`, `#cape-coast`…). CSS/JS de la page dans `public/home.css` / `public/home.js` |
 | `app/Http/Controllers/SurveyController.php` | `POST /api/responses` — validation serveur (miroir de l'original), dédup des idées proposées. `GET /api/survey-status` (public) reflète l'interrupteur `survey_open` (`Setting`) |
-| `app/Http/Controllers/GalleryController.php` | `GET /api/gallery` (public) **et** gestion `/api/gallery/*` (manage, album/photo CRUD, upload base64), réservée super-admin |
 | `app/Http/Controllers/JourneyStageController.php` | `GET /api/journey-stages` (public) **et** CRUD + `reorder` sous `/api/admin/journey-stages/*` (super-admin) |
-| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, export CSV, réglage Drive global, `POST /api/admin/survey/toggle` (ouvre/ferme le sondage) |
+| `app/Http/Controllers/AdminController.php` | Réservé super-admin : réponses, export CSV, `POST /api/admin/survey/toggle` (ouvre/ferme le sondage) |
 | `app/Http/Controllers/AuthController.php` | Login admin (mot de passe), logout, `me`, `session` |
 | `app/Http/Middleware/RequireAdmin.php` | Alias `admin`. Seul rôle d'accès : super-admin (plus de périmètre par comité à vérifier) |
 | `app/Support/WascalSession.php` | Un seul rôle porté par la **session** (équivalent du cookie signé Node) : `super` |
-| `app/Support/GalleryImage.php` | Décodage data-URL base64 + écriture/suppression dans le dossier d'uploads (`config('wascal.uploads_path')`) |
-| `app/Support/Sanitize.php` | Nettoyage couleur hex / URL http(s) |
-| `app/Models/*` | `Response` (casts JSON), `JourneyStage` (étapes du parcours, `tagInfo()`), `GalleryAlbum` (a des `photos`), `GalleryPhoto`, `Setting` (KV, `read/write`) |
-| `config/wascal.php` | **Référentiels serveur** (délégations, étiquettes d'activité/galerie, activités, talents, `admin_password`, `uploads_path`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
-| `database/seeders/GalleryOwnersSeeder.php` | Sème 1 album par étiquette (4 étiquettes + Club d'anglais) si la galerie est vide |
+| `app/Models/*` | `Response` (casts JSON), `JourneyStage` (étapes du parcours, `tagInfo()`), `Setting` (KV, `read/write`) |
+| `config/wascal.php` | **Référentiels serveur** (délégations, étiquettes d'activité `activity_tags`, activités, talents, `admin_password`) — miroir de `public/shared.js`. Source de vérité pour la **validation** |
 | `database/seeders/JourneyStageSeeder.php` | Sème une trame de 8 étapes (titres/textes à ajuster) si `journey_stages` est vide |
 | `resources/pages/*.html` | Front vanilla (index = one-page vitrine, survey, admin) |
 | `DEPLOY-HOSTINGER.md` | **Guide de déploiement mutualisé** (racine web sur `public/`, upload avec `vendor/`, MySQL, migrations) |
 
-## Le cœur : le carnet de bord (parcours + galerie)
+## Le cœur : le carnet de bord (parcours + photos)
 
 - **Parcours** (section du one-page `index.html`, table `journey_stages`) : chronologie du séjour,
   gérée depuis `/admin` (titre, étiquette de couleur, dates en texte libre, corps rédigé au passé),
-  affichée dans la section « Parcours » (`#parcours`) via `GET /api/journey-stages` — même pattern que la galerie
-  (fetch côté client, rendu en JS, rien de dédié côté route). Ordre = `sort_order`, réordonné via
+  affichée dans la section « Parcours » (`#parcours`) via `GET /api/journey-stages` (fetch côté
+  client, rendu en JS, rien de dédié côté route). Ordre = `sort_order`, réordonné via
   `POST /api/admin/journey-stages/reorder {ids: [...]}`.
-- **Galerie** : chaque album a une colonne `owner`, qui est désormais une simple **étiquette de
-  couleur** (`config('wascal.gallery_owners')` : Club d'anglais + 4 étiquettes), pas un compte scopé.
-  Un seul espace de gestion (`/admin`, super-admin) ; pas de connexion par code, pas de périmètre à
-  vérifier côté serveur. Upload = image redimensionnée par le navigateur, envoyée en **base64**, écrite
-  dans `public/uploads` (ou `uploads_path`).
+- **Étiquettes** : `config('wascal.activity_tags')` (miroir `ACTIVITY_TAGS` de `public/shared.js`) —
+  Club d'anglais + 4 étiquettes de couleur, posées sur les étapes du parcours (`journey_stages.tag`).
+- **Photos** : fichiers statiques versionnés dans `public/img/` (JPG optimisés + variantes `-800`
+  pour `srcset`), placés directement dans `index.html` ; `[data-zoom]` les ouvre en plein écran.
+  Les originaux (HEIC) restent hors dépôt (`public/pictures/` est ignoré).
 
 ## Conventions
 
@@ -104,7 +99,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
   Climate Change* et *Informatics Applied to Climate Change* — à garder dans le contenu et les meta.
 - **Parité avec l'app Node d'origine** (archivée dans `archive/files/`) : mêmes contrats d'API, mêmes
   règles de validation, mêmes messages. Le front lit `d.errors` (pluriel) pour le sondage, `d.error`
-  (singulier) pour les erreurs galerie/admin — respecter cette distinction.
+  (singulier) pour les erreurs admin — respecter cette distinction.
 - **Dev sur SQLite, prod sur MySQL** : garder le SQL **portable** (Eloquent/migrations, pas de fonction
   spécifique à un moteur).
 - **Secrets hors du code** : `ADMIN_PASSWORD` via `.env` (⚠️ fallback `wascal2026` si absent — définir en

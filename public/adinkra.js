@@ -55,7 +55,7 @@ export const ADINKRA = {
 
 const NS = 'http://www.w3.org/2000/svg';
 
-/* Chaîne HTML d'un SVG Adinkra prêt à hydrater (rendus dynamiques : parcours, galerie…). */
+/* Chaîne HTML d'un SVG Adinkra prêt à hydrater (rendus dynamiques : parcours…). */
 export function adinkraSVG(cle, className = '') {
   const cls = ('adk ' + className).trim().replace(/"/g, '');
   return '<svg class="' + cls + '" data-adinkra="' + String(cle).replace(/[^a-z]/gi, '') + '"></svg>';

@@ -10,11 +10,6 @@ return [
     // Fallback identique à l'app Node d'origine — À CHANGER en production.
     'admin_password' => env('ADMIN_PASSWORD', 'wascal2026'),
 
-    // Dossier où sont ÉCRITES les photos téléversées. Par défaut public/uploads (racine web = public/).
-    // Sur mutualisé où la racine web est public_html, pointer ici vers .../public_html/uploads
-    // (les photos restent servies à l'URL relative « uploads/… »). Voir DEPLOY-HOSTINGER.md.
-    'uploads_path' => env('WASCAL_UPLOADS_PATH', public_path('uploads')),
-
     // 8 délégations francophones d'Afrique de l'Ouest.
     'delegations' => [
         'Bénin', 'Burkina Faso', "Côte d'Ivoire", 'Guinée',
@@ -26,11 +21,10 @@ return [
 
     'english_levels' => ['Débutant', 'Intermédiaire', 'Avancé'],
 
-    // Étiquettes d'activité : catégorisent à la fois les albums de la galerie et les étapes
-    // du parcours (`journey_stages.tag`). Anciennement les 4 « comités » (répartition, connexion
+    // Étiquettes d'activité : catégorisent les étapes du parcours (`journey_stages.tag`). Anciennement les 4 « comités » (répartition, connexion
     // par code) — désormais de simples étiquettes de couleur, sans compte ni périmètre associé.
     // Le Club d'anglais (et le super-admin) gère tout depuis un espace unique.
-    'gallery_owners' => [
+    'activity_tags' => [
         ['key' => 'club',    'name' => "Club d'anglais",       'color' => '#f2a900', 'emoji' => '📣'],
         ['key' => 'sorties', 'name' => 'Sorties & Excursions', 'color' => '#0e8c7a', 'emoji' => '🌳'],
         ['key' => 'soirees', 'name' => 'Soirées & Jeux',       'color' => '#8a2d5d', 'emoji' => '🎉'],

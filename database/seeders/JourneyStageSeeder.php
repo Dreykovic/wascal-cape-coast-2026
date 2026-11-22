@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 class JourneyStageSeeder extends Seeder
 {
     // Sème une trame de 8 étapes (à ajuster : vraies dates, texte, photos) si la table est
-    // vide. Idempotent, comme GalleryOwnersSeeder — ne touche à rien si des étapes existent déjà.
+    // vide. Idempotent — ne touche à rien si des étapes existent déjà.
     public function run(): void
     {
         if (JourneyStage::query()->exists()) {

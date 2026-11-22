@@ -14,7 +14,7 @@ Cette app **Laravel + MySQL** tourne sur un mutualisé Hostinger **sans VPS**. P
 2. **Base MySQL** — hPanel → *Bases de données → Bases MySQL* → créer une base + un utilisateur.
    Noter : **nom de base**, **utilisateur**, **mot de passe**, **hôte** (souvent `localhost`).
 3. **SSH** (recommandé) — hPanel → *Avancé → Accès SSH* : activer. Sert à lancer les migrations.
-   (Une procédure **sans SSH** est donnée au §6b.)
+   (Une procédure **sans SSH** est donnée au §5b.)
 
 ---
 
@@ -67,7 +67,7 @@ La plus propre : le code reste **hors** de la racine web.
 2. hPanel → *Sites web* (ou *Sous-domaines*) → fais pointer la **racine de documents** du
    domaine/sous-domaine vers **`/home/uXXXX/wascal-laravel/public`**.
 
-Rien d'autre à configurer : `public/uploads`, `app.css`, `shared.js` sont servis directement.
+Rien d'autre à configurer : `img/`, `app.css`, `shared.js` sont servis directement.
 
 ### Option B — repli : racine web fixée à `public_html/`
 
@@ -75,18 +75,13 @@ Si tu ne peux pas changer la racine (domaine principal) :
 
 1. Téléverse le projet dans `~/wascal-laravel/` (hors `public_html`).
 2. Déplace **le contenu** de `~/wascal-laravel/public/*` dans `~/public_html/`
-   (y compris `.htaccess`, `index.php`, `app.css`, `shared.js`, `favicon.ico`, `robots.txt`, `uploads/`).
+   (y compris `.htaccess`, `index.php`, `app.css`, `shared.js`, `favicon.ico`, `robots.txt`, `img/`).
 3. Édite `~/public_html/index.php` : les deux chemins `require`/`bootstrap` doivent viser le projet.
    Remplace `__DIR__.'/../'` par `'/home/uXXXX/wascal-laravel/'` :
    ```php
    require '/home/uXXXX/wascal-laravel/vendor/autoload.php';
    $app = require_once '/home/uXXXX/wascal-laravel/bootstrap/app.php';
    ```
-4. Dis à l'app d'**écrire les photos dans le dossier servi**. Dans `.env` :
-   ```dotenv
-   WASCAL_UPLOADS_PATH=/home/uXXXX/public_html/uploads
-   ```
-   (Les photos restent servies à l'URL `uploads/…`. Crée le dossier : `mkdir -p ~/public_html/uploads`.)
 
 ---
 
@@ -110,32 +105,22 @@ Les dossiers écrits par l'app doivent être inscriptibles par l'utilisateur web
 
 ```bash
 chmod -R 775 storage bootstrap/cache
-mkdir -p public/uploads && chmod 775 public/uploads    # (ou ~/public_html/uploads en Option B)
 ```
 
 ---
 
-## 5. Autoriser les uploads de photos (taille du POST)
+## 5. Créer les tables (migrations) — une seule fois
 
-Les photos sont envoyées en **base64 JSON** (redimensionnées côté navigateur, ~1–2 Mo). Le `post_max_size`
-par défaut peut être trop bas. hPanel → *Configuration PHP → Options* : mettre
-**`post_max_size` = 16M** et **`upload_max_filesize` = 16M**. (Ou via un `.htaccess` :
-`php_value post_max_size 16M`.)
-
----
-
-## 6. Créer les tables (migrations) — une seule fois
-
-### 6a. Avec SSH (recommandé)
+### 5a. Avec SSH (recommandé)
 
 ```bash
 cd ~/wascal-laravel
-php artisan migrate --force --seed     # crée les tables + sème les 5 albums de galerie + les étapes
+php artisan migrate --force --seed     # crée les tables + sème les étapes du parcours
 php artisan config:cache               # met la config en cache (perf)
 php artisan route:cache
 ```
 
-### 6b. Sans SSH
+### 5b. Sans SSH
 
 - Utilise le **terminal du navigateur** de hPanel (*Avancé → Terminal*) et lance les mêmes commandes.
 - À défaut, importe le schéma via **phpMyAdmin** : en local, `php artisan schema:dump`, puis importe le
@@ -143,17 +128,17 @@ php artisan route:cache
 
 ---
 
-## 7. Vérifier
+## 6. Vérifier
 
-1. Ouvre `https://ton-domaine.example/` → le site s'affiche ; fais défiler jusqu'à la slide
-   « Parcours » (étapes semées par défaut) et « Galerie ».
+1. Ouvre `https://ton-domaine.example/` → le site s'affiche ; fais défiler jusqu'à la section
+   « Parcours » (étapes semées par défaut) ; les photos s'ouvrent en plein écran au clic.
 2. `/survey` → remplis et envoie une réponse test.
 3. `/admin` → connecte-toi avec `ADMIN_PASSWORD` → tu vois les réponses, l'export CSV, les étapes du
-   parcours et la galerie. Édite les étapes (titre, dates réelles, texte) au fil du séjour.
+   parcours. Édite les étapes (titre, dates réelles, texte) au fil du séjour.
 
 ---
 
-## 8. Mettre à jour plus tard
+## 7. Mettre à jour plus tard
 
 Avec Git + SSH :
 
@@ -171,10 +156,13 @@ En Option B, re-synchronise `public/*` vers `public_html/` après un `git pull` 
 
 ## Sauvegarde
 
-Tout l'état vit dans **la base MySQL** (réponses, albums, codes, réglages) **+** le dossier des
-**photos** (`public/uploads` ou `public_html/uploads`). Sauvegarder les deux :
-- base : hPanel → *Bases MySQL → Exporter* (ou phpMyAdmin → Exporter),
-- photos : télécharger le dossier `uploads/`.
+Tout l'état vit dans **la base MySQL** (réponses, étapes du parcours, réglages) ; les photos du site
+sont versionnées dans le dépôt (`public/img/`). Sauvegarder la base :
+hPanel → *Bases MySQL → Exporter* (ou phpMyAdmin → Exporter).
+
+> ⚠️ La migration `drop_gallery_tables` **supprime les tables de l'ancienne galerie** (albums, photos).
+> Exporte la base avant le `php artisan migrate --force` si elle contient des albums à garder.
+> Le dossier `uploads/` éventuel n'est pas touché : récupère ou supprime-le à la main.
 
 ---
 
@@ -185,5 +173,4 @@ Tout l'état vit dans **la base MySQL** (réponses, albums, codes, réglages) **
 | Page blanche / 500 | `APP_KEY` manquante ou `storage/` non inscriptible | `php artisan key:generate` ; `chmod -R 775 storage bootstrap/cache` |
 | 500 après déploiement | config en cache obsolète | `php artisan config:clear` puis `config:cache` |
 | CSS/JS non chargés | mauvaise racine web | racine doit pointer sur `public/` (Option A) ou assets copiés dans `public_html/` (Option B) |
-| Upload photo échoue | `post_max_size` trop bas ou `uploads/` non inscriptible | §5 + `chmod 775` sur le dossier d'uploads |
 | « SQLSTATE… access denied » | identifiants MySQL | revérifier `DB_*` dans `.env` depuis hPanel |

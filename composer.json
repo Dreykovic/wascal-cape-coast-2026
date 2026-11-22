@@ -3,7 +3,7 @@
     "name": "dreykovic/wascal-cape-coast-2026",
     "type": "project",
     "description": "Boite a outils WASCAL Cape Coast 2026 - programme des cours, rappels et activites pour 32 etudiants de 8 delegations francophones d'Afrique de l'Ouest. Laravel 13 + MySQL/SQLite, sans build front, deployable sur hebergement mutualise.",
-    "keywords": ["laravel", "wascal", "sondage", "galerie", "hebergement-mutualise"],
+    "keywords": ["laravel", "wascal", "sondage", "hebergement-mutualise"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

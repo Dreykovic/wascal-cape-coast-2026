@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Response as SurveyResponse;
 use App\Models\Setting;
-use App\Support\Sanitize;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -51,14 +50,6 @@ class AdminController extends Controller
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="wascal-responses.csv"',
         ]);
-    }
-
-    // POST /api/admin/gallery/settings {drive_all} — lien Drive global.
-    public function gallerySettings(Request $request): JsonResponse
-    {
-        Setting::write('drive_all', Sanitize::url($request->input('drive_all')));
-
-        return response()->json(['ok' => true]);
     }
 
     // POST /api/admin/survey/toggle {open: bool} — ouvre/ferme le sondage aux nouvelles réponses.
