@@ -82,7 +82,7 @@ Pas de `npm`, pas de build : le front est servi tel quel. Déploiement mutualis�
 - **Photos** : fichiers statiques versionnés dans `public/img/` (JPG optimisés + variantes `-800`
   ou `-600` pour `srcset`), placés directement dans `index.html` ; `[data-zoom]` les ouvre en plein
   écran. La section `#images` (« Le séjour en images ») est une **mosaïque statique par chapitres**
-  (plage, campus, château, Kakum, culture, fins de journée) : ajouter une photo = un `<li>` dans le
+  (plage, campus, château, Kakum, culture, fins de journée, cérémonie de clôture) : ajouter une photo = un `<li>` dans le
   bon chapitre, pas de base ni d'admin. Les originaux (HEIC) restent hors dépôt (`public/pictures/` ignoré).
 
 ## Conventions
