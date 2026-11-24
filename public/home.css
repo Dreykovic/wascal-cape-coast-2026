@@ -549,3 +549,8 @@ main:focus{outline:none}
 .mosaic li:hover img{transform:scale(1.04)}
 .mosaic li::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--kente)}
 @media (max-width:599px){.mosaic{columns:2 140px;column-gap:10px}.mosaic li{margin-bottom:10px;border-radius:10px}}
+
+/* ===== Festival : photo de la cérémonie de clôture ===== */
+.festival-photo{max-width:820px;margin:26px auto 30px;background:rgba(20,12,4,.55);border:3px solid var(--gold);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.festival-photo img{max-height:none;object-position:50% 50%}
+.festival-photo figcaption{color:#fff;font-weight:700;text-align:center}
